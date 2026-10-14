@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "DeafCS Tools",
+  "version": "0.1.0",
+  "description": "Auto-Ready, Copy Server IP и Auto Join Server для DeafCS.",
+  "permissions": ["storage", "clipboardWrite", "scripting"],
+  "host_permissions": ["https://*.deafcs.net/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "DeafCS Tools",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.deafcs.net/*"],
+      "js": [
+        "shared.js",
+        "content-scripts/common.js",
+        "content-scripts/auto-ready.js",
+        "content-scripts/copy-server-ip.js",
+        "content-scripts/auto-join.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
