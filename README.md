@@ -56,7 +56,7 @@ The domain is set in `manifest.json`, in two fields with the same value: `conten
 3. Click **"Load unpacked"** and select the unzipped `deafcs-tools` folder (the one containing `manifest.json`).
 4. Pin the DeafCS Tools icon to the toolbar (puzzle icon → pin) and reload the deafcs.net tab.
 
-Don't delete the folder after installing: Chrome loads the extension directly from it. To update, download the new release and unzip it over the old folder and click the reload button on the extension card. When a new version is out, the popup says so and links to the ZIP.
+Don't delete the folder after installing: Chrome loads the extension directly from it. To update, download the new release and unzip it over the old folder, then click the reload button on the extension card. When a new version is out, the popup says so and links to the ZIP.
 
 ### License
 
@@ -116,7 +116,7 @@ Chrome-расширение (Manifest V3) для игроков [DeafCS](https:/
 3. Нажмите **«Загрузить распакованное расширение»** и выберите распакованную папку `deafcs-tools` (ту, где лежит `manifest.json`).
 4. Закрепите иконку DeafCS Tools на панели (значок пазла → булавка) и обновите вкладку deafcs.net.
 
-Папку после установки не удаляйте: Chrome загружает расширение прямо из неё. Чтобы обновиться, скачайте новый релиз и распакуйте его поверх старой папки и нажмите кнопку обновления на карточке расширения. Когда выходит новая версия, popup сообщает об этом и даёт ссылку на ZIP.
+Папку после установки не удаляйте: Chrome загружает расширение прямо из неё. Чтобы обновиться, скачайте новый релиз и распакуйте его поверх старой папки, затем нажмите кнопку обновления на карточке расширения. Когда выходит новая версия, popup сообщает об этом и даёт ссылку на ZIP.
 
 ### Лицензия
 
