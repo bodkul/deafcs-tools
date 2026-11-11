@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.zip
+*.crx
+*.pem
+.DS_Store
+
+# local copies of deafcs.net HTML used to fix the content scripts
+fixtures/

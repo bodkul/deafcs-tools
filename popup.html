@@ -1,0 +1,323 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>DeafCS Tools</title>
+  <style>
+    /* shadcn/ui "zinc" theme tokens */
+    :root {
+      color-scheme: light;
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+      --muted: 240 4.8% 95.9%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --border: 240 5.9% 90%;
+      --input: 240 5.9% 90%;
+      --primary: 240 5.9% 10%;
+      --primary-foreground: 0 0% 98%;
+      --secondary: 240 4.8% 95.9%;
+      --secondary-foreground: 240 5.9% 10%;
+      --accent: 240 4.8% 95.9%;
+      --ring: 240 10% 3.9%;
+      --brand: 38 92% 50%;
+      --brand-foreground: 240 10% 3.9%;
+      --radius: 0.5rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --background: 240 10% 3.9%;
+        --foreground: 0 0% 98%;
+        --muted: 240 3.7% 15.9%;
+        --muted-foreground: 240 5% 64.9%;
+        --border: 240 3.7% 15.9%;
+        --input: 240 3.7% 15.9%;
+        --primary: 0 0% 98%;
+        --primary-foreground: 240 5.9% 10%;
+        --secondary: 240 3.7% 15.9%;
+        --secondary-foreground: 0 0% 98%;
+        --accent: 240 3.7% 15.9%;
+        --ring: 240 4.9% 83.9%;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 280px;
+      margin: 0;
+      padding: 16px;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .brand img {
+      flex: none;
+      width: 26px;
+      height: 26px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .header p {
+      margin: 0;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      white-space: nowrap;
+    }
+
+    /* Toggle group */
+    .lang {
+      display: inline-flex;
+      flex: none;
+      padding: 2px;
+      border-radius: calc(var(--radius) - 2px);
+      background: hsl(var(--muted));
+    }
+
+    .lang button {
+      height: 22px;
+      padding: 0 8px;
+      border: 0;
+      border-radius: calc(var(--radius) - 4px);
+      background: transparent;
+      color: hsl(var(--muted-foreground));
+      font: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .lang button:hover {
+      color: hsl(var(--foreground));
+    }
+
+    .lang button[aria-pressed="true"] {
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      box-shadow: 0 1px 2px rgb(0 0 0 / 0.1);
+    }
+
+    .lang button:focus-visible {
+      outline: 2px solid hsl(var(--ring));
+      outline-offset: 1px;
+    }
+
+    /* Update banner */
+    .update {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px 10px;
+      border: 1px solid hsl(var(--brand) / 0.5);
+      border-radius: calc(var(--radius) - 2px);
+      background: hsl(var(--brand) / 0.12);
+      font-size: 12px;
+    }
+
+    .update[hidden] {
+      display: none;
+    }
+
+    .update a {
+      flex: none;
+      color: inherit;
+      font-weight: 600;
+    }
+
+    .update a:focus-visible {
+      outline: 2px solid hsl(var(--ring));
+      outline-offset: 1px;
+    }
+
+    .separator {
+      height: 1px;
+      margin: 14px 0;
+      background: hsl(var(--border));
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .field+.field {
+      margin-top: 12px;
+    }
+
+    .field.sub {
+      margin-top: 8px;
+      padding-left: 12px;
+      border-left: 2px solid hsl(var(--border));
+    }
+
+    .label {
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .label.muted {
+      font-weight: 400;
+      color: hsl(var(--muted-foreground));
+      cursor: default;
+    }
+
+    .field:has(:disabled) .label {
+      opacity: 0.5;
+    }
+
+    /* Switch */
+    .switch {
+      appearance: none;
+      flex: none;
+      position: relative;
+      width: 36px;
+      height: 20px;
+      margin: 0;
+      border: 2px solid transparent;
+      border-radius: 9999px;
+      background: hsl(var(--input));
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .switch:hover:not(:checked) {
+      background: hsl(var(--muted-foreground) / 0.4);
+    }
+
+    .switch::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 16px;
+      height: 16px;
+      border-radius: 9999px;
+      background: hsl(0 0% 100%);
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+      transition: transform 0.15s;
+    }
+
+    .switch:checked {
+      background: hsl(var(--brand));
+    }
+
+    .switch:checked::before {
+      transform: translateX(16px);
+    }
+
+    /* Input */
+    .input {
+      width: 56px;
+      height: 28px;
+      padding: 0 8px;
+      border: 1px solid hsl(var(--input));
+      border-radius: calc(var(--radius) - 2px);
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      font-size: 13px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      -moz-appearance: textfield;
+      transition: border-color 0.15s;
+    }
+
+    .input::-webkit-inner-spin-button,
+    .input::-webkit-outer-spin-button {
+      margin: 0;
+      appearance: none;
+    }
+
+    .input:hover:not(:disabled) {
+      border-color: hsl(var(--muted-foreground) / 0.5);
+    }
+
+    .input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .switch:focus-visible,
+    .input:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div class="header-row">
+      <div class="brand">
+        <img src="icons/icon48.png" alt="">
+        <div>
+          <h1>DeafCS Tools</h1>
+          <p data-i18n="subtitle"></p>
+        </div>
+      </div>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="ru">RU</button>
+      </div>
+    </div>
+    <div class="update" id="update" hidden>
+      <span id="updateText"></span>
+      <a id="updateLink" target="_blank" rel="noreferrer" data-i18n="updateDownload"></a>
+    </div>
+  </div>
+
+  <div class="separator"></div>
+
+  <div class="field">
+    <label class="label" for="autoReady" data-i18n="autoReady"></label>
+    <input class="switch" type="checkbox" role="switch" id="autoReady">
+  </div>
+  <div class="field sub">
+    <label class="label muted" for="autoReadyDelay" data-i18n="delay"></label>
+    <input class="input" type="number" id="autoReadyDelay" step="1">
+  </div>
+  <div class="field">
+    <label class="label" for="copyServerIp" data-i18n="copyServerIp"></label>
+    <input class="switch" type="checkbox" role="switch" id="copyServerIp">
+  </div>
+  <div class="field">
+    <label class="label" for="autoJoinServer" data-i18n="autoJoinServer"></label>
+    <input class="switch" type="checkbox" role="switch" id="autoJoinServer">
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="popup.js"></script>
+</body>
+
+</html>
