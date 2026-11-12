@@ -5,7 +5,8 @@
   // and a "<b>N</b> in queue" / "Nobody queued" line. The site lights up only "your" seat;
   // here the dots show how many players are queued instead.
   const TILE_SELECTOR = "button[data-mode-key]";
-  const DOTS_SELECTOR = '[role="img"] i';
+  // Seat diagrams anywhere: in the tiles and in the panel shown after "Find match".
+  const DIAGRAM_SELECTOR = '[role="img"]:has(> span > i.rounded-full)';
   const DOT_ATTR = "data-deafcs-dot";
   const STYLE_ID = "deafcs-queue-dots";
 
@@ -38,15 +39,41 @@
     return 0;
   }
 
+  // Matchmaking screen after "Find match": the tiles are gone, and the count is in a line next to
+  // the diagram, "FRANKFURT #2 · 7 in queue".
+  const IN_QUEUE = /(?:^|[^\d#])(\d+)\s+in queue/i;
+
+  // Climbs from the diagram while the ancestor holds no other diagram, and takes the number from
+  // the innermost element whose text has "N in queue". undefined when none is found.
+  function searchingCount(diagram) {
+    for (let el = diagram.parentElement; el && el !== document.body; el = el.parentElement) {
+      if (el.querySelectorAll(DIAGRAM_SELECTOR).length > 1) return undefined;
+      if (!IN_QUEUE.test(el.textContent)) continue;
+      let line = el;
+      for (let inner = line; inner; ) {
+        line = inner;
+        inner = [...line.children].find((c) => IN_QUEUE.test(c.textContent));
+      }
+      return Number(line.textContent.match(IN_QUEUE)[1]);
+    }
+    return undefined;
+  }
+
+  function setDot(dot, state) {
+    if (state === null) dot.removeAttribute(DOT_ATTR);
+    else if (dot.getAttribute(DOT_ATTR) !== state) dot.setAttribute(DOT_ATTR, state);
+  }
+
   function check() {
-    const tiles = document.querySelectorAll(TILE_SELECTOR);
-    if (!tiles.length) return;
+    const diagrams = document.querySelectorAll(DIAGRAM_SELECTOR);
+    if (!diagrams.length) return;
     ensureStyle();
-    for (const tile of tiles) {
-      const count = queuedCount(tile);
-      tile.querySelectorAll(DOTS_SELECTOR).forEach((dot, i) => {
-        const state = i < count ? "on" : "off";
-        if (dot.getAttribute(DOT_ATTR) !== state) dot.setAttribute(DOT_ATTR, state);
+    for (const diagram of diagrams) {
+      const tile = diagram.closest(TILE_SELECTOR);
+      const count = tile ? queuedCount(tile) : searchingCount(diagram);
+      diagram.querySelectorAll("i").forEach((dot, i) => {
+        // Unknown count (no matching tile on the page): leave the site's own look.
+        setDot(dot, count === undefined ? null : i < count ? "on" : "off");
       });
     }
   }
