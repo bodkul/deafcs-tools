@@ -1,17 +1,14 @@
 (() => {
-  const { t, isAlive, onSettings, toast, observeDom, runCheck, isMatchPage } = window.DeafCS;
+  const { t, isAlive, toast, feature, isMatchPage, joinLink } = window.DeafCS;
 
   // Copy-IP button on the match-started screen; the site copies this attribute itself.
   const CLIPBOARD_SELECTOR = '[data-clipboard-text^="connect "]';
-  // "Join Server" link, as a backup source: steam://run/730//+connect IP:PORT
-  const JOIN_LINK_SELECTOR = 'a[href*="+connect "]';
   // Host is an IPv4 address, a bracketed IPv6 one ("[2a01:4f8::1]") or a domain name; port optional.
   const CONNECT_PATTERN = /connect\s+((?:\[[\da-f:.]+\]|[a-z\d-]+(?:\.[a-z\d-]+)+)(?::\d{1,5})?)/i;
 
   // Interactions after which the clipboard is usually writable again.
   const RETRY_EVENTS = ["pointerdown", "keydown", "focus"];
 
-  let observer = null;
   // Command currently shown on the page; reset when the screen goes away,
   // so the next match on the same server is copied again.
   let lastCopied = null;
@@ -30,7 +27,8 @@
     if (!isMatchPage()) return null;
     const source =
       document.querySelector(CLIPBOARD_SELECTOR)?.getAttribute("data-clipboard-text") ??
-      safeDecode(document.querySelector(JOIN_LINK_SELECTOR)?.getAttribute("href") ?? "");
+      // "Join Server" link as a backup source.
+      safeDecode(joinLink()?.getAttribute("href") ?? "");
     const match = source.match(CONNECT_PATTERN);
     return match ? `connect ${match[1]}` : null;
   }
@@ -76,7 +74,7 @@
     async function retry() {
       if (busy) return;
       const command = findConnect();
-      if (!observer || !isAlive() || !command) return done();
+      if (!isOn() || !isAlive() || !command) return done();
       if (command !== lastCopied) return; // check() handles a new command itself
       busy = true;
       try {
@@ -103,16 +101,9 @@
     }
   }
 
-  onSettings((settings) => {
-    if (settings.copyServerIp && !observer) {
-      observer = observeDom(check, { childList: true, subtree: true, characterData: true });
-      runCheck(check);
-      deafcsLog("copy-server-ip: enabled");
-    } else if (!settings.copyServerIp && observer) {
-      observer.disconnect();
-      observer = null;
-      deafcsLog("copy-server-ip: disabled");
-    }
+  const isOn = feature("copyServerIp", "copy-server-ip", {
+    check,
+    observe: { childList: true, subtree: true, characterData: true }
   });
 
   deafcsLog("copy-server-ip.js loaded");

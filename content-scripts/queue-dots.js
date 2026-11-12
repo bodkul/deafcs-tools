@@ -1,5 +1,5 @@
 (() => {
-  const { onSettings, observeDom, runCheck } = window.DeafCS;
+  const { feature } = window.DeafCS;
 
   // Game mode tiles on the play page; each has a seat diagram (role="img", one <i> per seat)
   // and a "<b>N</b> in queue" / "Nobody queued" line. The site lights up only "your" seat;
@@ -84,20 +84,11 @@
     for (const dot of document.querySelectorAll(`i[${DOT_ATTR}]`)) dot.removeAttribute(DOT_ATTR);
   }
 
-  let observer = null;
-
-  onSettings((settings) => {
-    if (settings.queueDots && !observer) {
-      // characterData: the queue number changes as text inside an existing <b>.
-      observer = observeDom(check, { childList: true, subtree: true, characterData: true });
-      runCheck(check);
-      deafcsLog("queue-dots: enabled");
-    } else if (!settings.queueDots && observer) {
-      observer.disconnect();
-      observer = null;
-      restore();
-      deafcsLog("queue-dots: disabled");
-    }
+  feature("queueDots", "queue-dots", {
+    check,
+    // characterData: the queue number changes as text inside an existing <b>.
+    observe: { childList: true, subtree: true, characterData: true },
+    onDisable: restore
   });
 
   deafcsLog("queue-dots.js loaded");

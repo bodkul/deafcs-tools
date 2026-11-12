@@ -1,12 +1,10 @@
 (() => {
-  const { isAlive, onSettings, isVisible, matchFoundDialogs } = window.DeafCS;
+  const { isAlive, onSettings, isVisible, feature, matchFoundDialogs } = window.DeafCS;
 
   const READY_BUTTON_SELECTOR = "button.tac-amber-cta";
   const READY_BUTTON_TEXT = /^\s*ready\s*$/i;
   const JITTER_MS = 700;
 
-  let enabled = false;
-  let observer = null;
   let delaySec = DEAFCS_DEFAULTS.autoReadyDelaySec;
   // State of the current Match Found, reset once the dialog is gone. Kept by time, not by
   // element: the site re-renders the dialog while the "N / 10 Confirmed" counter changes.
@@ -24,7 +22,7 @@
   }
 
   function check() {
-    if (!enabled || !isAlive()) return;
+    if (!isOn() || !isAlive()) return;
     const button = findReadyButton();
     if (!button) {
       clickAt = 0;
@@ -46,23 +44,20 @@
     deafcsLog("auto-ready: clicked Ready");
   }
 
+  // Registered before feature(), so the delay is up to date when the first check runs.
   onSettings((settings) => {
     delaySec = deafcsClamp("autoReadyDelaySec", settings.autoReadyDelaySec);
-    enabled = !!settings.autoReady;
+  });
 
-    if (enabled && !observer) {
-      // Called on every mutation, not coalesced through a timer: in a background tab Chrome
-      // throttles timers hard, while the site's countdown ticks (characterData) keep coming.
-      observer = new MutationObserver(() => (isAlive() ? check() : observer?.disconnect()));
-      observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
-      check();
-      deafcsLog("auto-ready: enabled");
-    } else if (!enabled && observer) {
-      observer.disconnect();
-      observer = null;
+  const isOn = feature("autoReady", "auto-ready", {
+    check,
+    observe: { childList: true, subtree: true, characterData: true },
+    // On every mutation, not coalesced through a timer: in a background tab Chrome throttles
+    // timers hard, while the site's countdown ticks (characterData) keep coming.
+    immediate: true,
+    onDisable: () => {
       clickAt = 0;
       clicked = false;
-      deafcsLog("auto-ready: disabled");
     }
   });
 

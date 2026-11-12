@@ -167,7 +167,8 @@
   // Coalesces bursts of DOM mutations into a single callback. setTimeout, not
   // requestAnimationFrame: rAF never fires in a hidden tab (another tab active, or the
   // window covered by the game), which is exactly when Match Found tends to show up.
-  function observeDom(callback, options = { childList: true, subtree: true }) {
+  // immediate: run on every mutation instead, for checks that can't wait for a throttled timer.
+  function observeDom(callback, options = { childList: true, subtree: true }, { immediate = false } = {}) {
     let scheduled = false;
     const observer = new MutationObserver(() => {
       if (!isAlive()) {
@@ -176,6 +177,7 @@
         orphanLogged = true;
         return;
       }
+      if (immediate) return runCheck(callback);
       if (scheduled) return;
       scheduled = true;
       setTimeout(() => {
@@ -185,6 +187,27 @@
     });
     observer.observe(document.documentElement, options);
     return observer;
+  }
+
+  // Turns a feature on and off with its boolean setting `key`: while on, check() runs right away
+  // and then on DOM changes (observe/immediate are passed to observeDom). onDisable undoes what
+  // the feature left on the page. Returns isOn(), for async work that must stop if the feature
+  // was turned off in the meantime.
+  function feature(key, name, { check, observe, immediate = false, onDisable }) {
+    let observer = null;
+    onSettings((settings) => {
+      if (settings[key] && !observer) {
+        observer = observeDom(check, observe, { immediate });
+        runCheck(check);
+        deafcsLog(`${name}: enabled`);
+      } else if (!settings[key] && observer) {
+        observer.disconnect();
+        observer = null;
+        onDisable?.();
+        deafcsLog(`${name}: disabled`);
+      }
+    });
+    return () => observer !== null;
   }
 
   // "Match Found" dialogs currently in the DOM (used by Auto-Ready and Auto Join).
@@ -199,6 +222,11 @@
   const MATCH_PAGE_PATH = /^\/matches\/[^/]+\/?$/;
   const isMatchPage = () => MATCH_PAGE_PATH.test(location.pathname);
 
+  // "Join Server" link on the match-started screen, steam://run/730//+connect IP:PORT
+  // (used by Copy Server IP and Auto Join). null outside match pages.
+  const JOIN_LINK_SELECTOR = 'a[href^="steam://"][href*="+connect "]';
+  const joinLink = () => (isMatchPage() ? document.querySelector(JOIN_LINK_SELECTOR) : null);
+
   window.DeafCS = Object.assign(api, {
     t,
     isAlive,
@@ -209,8 +237,10 @@
     isVisible,
     observeDom,
     runCheck,
+    feature,
     matchFoundDialogs,
-    isMatchPage
+    isMatchPage,
+    joinLink
   });
 
   deafcsLog("common.js loaded");

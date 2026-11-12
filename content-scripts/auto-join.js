@@ -1,9 +1,6 @@
 (() => {
-  const { t, isAlive, onSettings, toast, randomDelay, isVisible, observeDom, runCheck, matchFoundDialogs, isMatchPage } =
-    window.DeafCS;
+  const { t, isAlive, toast, randomDelay, isVisible, feature, matchFoundDialogs, isMatchPage, joinLink } = window.DeafCS;
 
-  // "Join Server" link on the match-started screen: steam://run/730//+connect IP:PORT
-  const JOIN_LINK_SELECTOR = 'a[href^="steam://"][href*="+connect "]';
   const CLICK_DELAY_MS = [300, 800];
   // Remembers the last joined server ({ href, at }) so a page reload or a second tab doesn't
   // launch it again. Servers are reused between matches, so the entry expires and is
@@ -12,7 +9,6 @@
   const LAST_TTL_MS = 3 * 60 * 60 * 1000;
   const LOCK_NAME = "deafcs-tools:auto-join";
 
-  let observer = null;
   let joining = false;
   // Link already handled (joined or skipped) on this page, so DOM churn doesn't re-run storage reads.
   let handledHref = null;
@@ -44,8 +40,8 @@
       chrome.storage.local.remove(LAST_KEY);
       deafcsLog("auto-join: Match Found, forgetting the last joined server");
     }
-    if (joining || !isMatchPage()) return;
-    const link = document.querySelector(JOIN_LINK_SELECTOR);
+    if (joining) return;
+    const link = joinLink();
     if (!link || !isVisible(link)) return;
     const href = link.getAttribute("href");
     if (href === handledHref) return;
@@ -53,7 +49,7 @@
     joining = true;
     try {
       await randomDelay(...CLICK_DELAY_MS);
-      if (!observer || !isAlive() || !isMatchPage() || !isVisible(link)) return;
+      if (!isOn() || !isAlive() || !isMatchPage() || !isVisible(link)) return;
 
       handledHref = href;
       if (!(await claim(href))) {
@@ -69,17 +65,7 @@
     }
   }
 
-  onSettings((settings) => {
-    if (settings.autoJoinServer && !observer) {
-      observer = observeDom(check);
-      runCheck(check);
-      deafcsLog("auto-join: enabled");
-    } else if (!settings.autoJoinServer && observer) {
-      observer.disconnect();
-      observer = null;
-      deafcsLog("auto-join: disabled");
-    }
-  });
+  const isOn = feature("autoJoinServer", "auto-join", { check });
 
   deafcsLog("auto-join.js loaded");
 })();
