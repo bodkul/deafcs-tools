@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DeafCS Tools",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Auto-Ready, Copy Server IP and Auto Join Server for DeafCS.",
   "permissions": ["storage", "clipboardWrite", "scripting"],
   "host_permissions": ["https://*.deafcs.net/*"],
