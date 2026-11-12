@@ -31,7 +31,8 @@
         "content-scripts/auto-ready.js",
         "content-scripts/copy-server-ip.js",
         "content-scripts/auto-join.js",
-        "content-scripts/queue-dots.js"
+        "content-scripts/queue-dots.js",
+        "content-scripts/hide-cancelled.js"
       ],
       "run_at": "document_idle"
     }

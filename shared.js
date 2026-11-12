@@ -17,6 +17,7 @@ var DEAFCS_DEFAULTS = {
   copyServerIp: true,
   autoJoinServer: false,
   queueDots: true,
+  hideCancelled: true,
   updateLatest: "",
   updateCheckedAt: 0
 };
@@ -70,6 +71,7 @@ var DEAFCS_STRINGS = {
     copyServerIp: "Copy Server IP",
     autoJoinServer: "Auto Join Server",
     queueDots: "Queue Dots",
+    hideCancelled: "Hide Cancelled Matches",
     ipCopied: "IP copied",
     autoJoinFired: "Joining server…",
     updateAvailable: "Update available: v{version}",
@@ -82,6 +84,7 @@ var DEAFCS_STRINGS = {
     copyServerIp: "Copy Server IP",
     autoJoinServer: "Auto Join Server",
     queueDots: "Queue Dots",
+    hideCancelled: "Скрыть отменённые матчи",
     ipCopied: "IP скопирован",
     autoJoinFired: "Подключаемся к серверу…",
     updateAvailable: "Доступно обновление: v{version}",
