@@ -30,7 +30,8 @@
         "content-scripts/common.js",
         "content-scripts/auto-ready.js",
         "content-scripts/copy-server-ip.js",
-        "content-scripts/auto-join.js"
+        "content-scripts/auto-join.js",
+        "content-scripts/queue-dots.js"
       ],
       "run_at": "document_idle"
     }

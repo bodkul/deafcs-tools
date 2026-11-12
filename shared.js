@@ -16,6 +16,7 @@ var DEAFCS_DEFAULTS = {
   autoReadyDelaySec: 5,
   copyServerIp: true,
   autoJoinServer: false,
+  queueDots: true,
   updateLatest: "",
   updateCheckedAt: 0
 };
@@ -68,6 +69,7 @@ var DEAFCS_STRINGS = {
     delay: "Delay, sec",
     copyServerIp: "Copy Server IP",
     autoJoinServer: "Auto Join Server",
+    queueDots: "Queue Dots",
     ipCopied: "IP copied",
     autoJoinFired: "Joining server…",
     updateAvailable: "Update available: v{version}",
@@ -79,6 +81,7 @@ var DEAFCS_STRINGS = {
     delay: "Задержка, сек",
     copyServerIp: "Copy Server IP",
     autoJoinServer: "Auto Join Server",
+    queueDots: "Queue Dots",
     ipCopied: "IP скопирован",
     autoJoinFired: "Подключаемся к серверу…",
     updateAvailable: "Доступно обновление: v{version}",
