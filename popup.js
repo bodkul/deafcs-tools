@@ -1,7 +1,5 @@
-const DEFAULTS = DEAFCS_DEFAULTS;
-
 const $ = (id) => document.getElementById(id);
-let state = { ...DEFAULTS };
+let state = { ...DEAFCS_DEFAULTS };
 
 const t = (key, vars) => deafcsT(state.lang, key, vars);
 
@@ -33,11 +31,15 @@ for (const key of ["autoReady", "copyServerIp", "autoJoinServer", "queueDots"]) 
   $(key).addEventListener("change", (e) => chrome.storage.local.set({ [key]: e.target.checked }));
 }
 
-$("autoReadyDelay").addEventListener("change", () => {
-  const sec = deafcsClamp("autoReadyDelaySec", $("autoReadyDelay").value);
-  $("autoReadyDelay").value = sec;
-  chrome.storage.local.set({ autoReadyDelaySec: sec });
-});
+// Saved on every keystroke: closing the popup while the field has focus doesn't fire "change".
+// The field itself is rewritten with the clamped value only on "change", not while typing.
+for (const type of ["input", "change"]) {
+  $("autoReadyDelay").addEventListener(type, () => {
+    const sec = deafcsClamp("autoReadyDelaySec", $("autoReadyDelay").value);
+    if (type === "change") $("autoReadyDelay").value = sec;
+    chrome.storage.local.set({ autoReadyDelaySec: sec });
+  });
+}
 
 for (const btn of document.querySelectorAll("[data-lang]")) {
   btn.addEventListener("click", () => chrome.storage.local.set({ lang: btn.dataset.lang }));
@@ -45,11 +47,13 @@ for (const btn of document.querySelectorAll("[data-lang]")) {
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
-  for (const [key, { newValue }] of Object.entries(changes)) state[key] = newValue ?? DEFAULTS[key];
+  for (const [key, { newValue }] of Object.entries(changes)) {
+    if (key in DEAFCS_DEFAULTS) state[key] = newValue ?? DEAFCS_DEFAULTS[key];
+  }
   render();
 });
 
-chrome.storage.local.get(DEFAULTS).then((stored) => {
+chrome.storage.local.get(DEAFCS_DEFAULTS).then((stored) => {
   state = stored;
   render();
   // Browsers that stay open for days never fire onStartup, so the popup catches up.

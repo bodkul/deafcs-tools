@@ -2,7 +2,6 @@
 // so everything here is visible to the feature scripts loaded after it.
 (() => {
   const DEFAULTS = DEAFCS_DEFAULTS;
-
   const settings = { ...DEFAULTS };
   const listeners = new Set();
   let loaded = false;
@@ -36,10 +35,11 @@
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local" || !isAlive()) return;
-    for (const [key, { newValue }] of Object.entries(changes)) {
-      settings[key] = newValue === undefined ? DEFAULTS[key] : newValue;
-    }
-    if (loaded) notify(Object.keys(changes));
+    // Only settings: other keys (e.g. Auto Join's "autoJoinLast") are internal state.
+    const keys = Object.keys(changes).filter((key) => key in DEFAULTS);
+    if (!keys.length) return;
+    for (const key of keys) settings[key] = changes[key].newValue ?? DEFAULTS[key];
+    if (loaded) notify(keys);
   });
 
   // Called once settings are loaded and again on every change.
@@ -54,10 +54,6 @@
   }
 
   const t = (key, vars) => deafcsT(settings.lang, key, vars);
-
-  function setSettings(patch) {
-    return chrome.storage.local.set(patch);
-  }
 
   // shadcn/ui (Sonner) look, zinc theme. Shadow DOM isolates it from site CSS.
   const TOAST_CSS = `
@@ -231,12 +227,9 @@
     t,
     isAlive,
     onSettings,
-    setSettings,
     toast,
     randomDelay,
     isVisible,
-    observeDom,
-    runCheck,
     feature,
     matchFoundDialogs,
     isMatchPage,

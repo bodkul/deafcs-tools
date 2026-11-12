@@ -1,17 +1,6 @@
 importScripts("shared.js");
 
-const DEFAULTS = DEAFCS_DEFAULTS;
-
 deafcsLog("service worker loaded");
-
-async function ensureDefaults() {
-  const current = await chrome.storage.local.get(null);
-  const missing = {};
-  for (const [key, value] of Object.entries(DEFAULTS)) {
-    if (!(key in current)) missing[key] = value;
-  }
-  if (Object.keys(missing).length) await chrome.storage.local.set(missing);
-}
 
 // Chrome doesn't inject manifest content scripts into tabs that were already open when the
 // extension was installed or updated; without this those tabs need F5.
@@ -41,7 +30,6 @@ async function injectIntoOpenTabs() {
 }
 
 chrome.runtime.onInstalled.addListener(async () => {
-  await ensureDefaults();
   await injectIntoOpenTabs();
   await deafcsCheckUpdate();
 });
