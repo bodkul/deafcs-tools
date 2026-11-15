@@ -212,16 +212,16 @@
     return [...document.querySelectorAll('[role="alertdialog"]')].filter((d) => MATCH_FOUND_TEXT.test(d.textContent));
   }
 
-  // Match page: https://deafcs.net/matches/<id>. Other pages (server lists etc.) have their own
-  // copy-IP buttons and Join links, so match features only run here. Checked on every call:
+  // Match page: https://deafcs.net/matches/<id>. Other pages (server lists etc.) may have their own
+  // copy-IP and Join buttons, so match features only run here. Checked on every call:
   // the site navigates without reloading, so the URL changes under a running content script.
   const MATCH_PAGE_PATH = /^\/matches\/[^/]+\/?$/;
   const isMatchPage = () => MATCH_PAGE_PATH.test(location.pathname);
 
-  // "Join Server" link on the match-started screen, steam://run/730//+connect IP:PORT
-  // (used by Copy Server IP and Auto Join). null outside match pages.
-  const JOIN_LINK_SELECTOR = 'a[href^="steam://"][href*="+connect "]';
-  const joinLink = () => (isMatchPage() ? document.querySelector(JOIN_LINK_SELECTOR) : null);
+  // "Join Server" button on the server bar of the match page (used by Auto Join).
+  // null outside match pages.
+  const JOIN_BUTTON_SELECTOR = "button[data-server-bar-join]";
+  const joinButton = () => (isMatchPage() ? document.querySelector(JOIN_BUTTON_SELECTOR) : null);
 
   window.DeafCS = Object.assign(api, {
     t,
@@ -233,7 +233,7 @@
     feature,
     matchFoundDialogs,
     isMatchPage,
-    joinLink
+    joinButton
   });
 
   deafcsLog("common.js loaded");

@@ -1,36 +1,45 @@
 (() => {
-  const { t, isAlive, toast, feature, isMatchPage, joinLink } = window.DeafCS;
+  const { t, isAlive, toast, feature, isMatchPage } = window.DeafCS;
 
-  // Copy-IP button on the match-started screen; the site copies this attribute itself.
-  const CLIPBOARD_SELECTOR = '[data-clipboard-text^="connect "]';
-  // Host is an IPv4 address, a bracketed IPv6 one ("[2a01:4f8::1]") or a domain name; port optional.
-  const CONNECT_PATTERN = /connect\s+((?:\[[\da-f:.]+\]|[a-z\d-]+(?:\.[a-z\d-]+)+)(?::\d{1,5})?)/i;
+  // "Copy connect command" button on the server bar of the match page. The address next to it
+  // is redacted until revealed, so the command is taken from what this button copies
+  // (see copy-hook.js) instead of from the page.
+  const COPY_BUTTON_SELECTOR = "[data-server-bar-copy]";
+  const CONNECT_PATTERN = /\bconnect\s+\S/i;
+  const CAPTURE_TIMEOUT_MS = 3000;
 
   // Interactions after which the clipboard is usually writable again.
   const RETRY_EVENTS = ["pointerdown", "keydown", "focus"];
 
-  // Command currently shown on the page; reset when the screen goes away,
-  // so the next match on the same server is copied again.
-  let lastCopied = null;
+  // Match whose server bar was already handled; reset when the bar goes away,
+  // so a server bar shown again is copied again.
+  let handledMatch = null;
+  // Command copied from the current server bar.
+  let command = null;
   let retrying = false;
 
-  function safeDecode(text) {
-    try {
-      return decodeURIComponent(text);
-    } catch {
-      return text;
-    }
+  function copyButton() {
+    if (!isMatchPage()) return null;
+    const button = document.querySelector(COPY_BUTTON_SELECTOR);
+    return button && !button.disabled ? button : null;
   }
 
-  // Returns the console command "connect IP:PORT", or null if the screen isn't shown.
-  function findConnect() {
-    if (!isMatchPage()) return null;
-    const source =
-      document.querySelector(CLIPBOARD_SELECTOR)?.getAttribute("data-clipboard-text") ??
-      // "Join Server" link as a backup source.
-      safeDecode(joinLink()?.getAttribute("href") ?? "");
-    const match = source.match(CONNECT_PATTERN);
-    return match ? `connect ${match[1]}` : null;
+  // Clicks the site's copy button and returns the text it tried to copy, or null.
+  function captureCommand(button) {
+    return new Promise((resolve) => {
+      const finish = (text) => {
+        clearTimeout(timer);
+        document.removeEventListener("deafcs:copied", onCopied);
+        document.dispatchEvent(new CustomEvent("deafcs:capture-end"));
+        resolve(text);
+      };
+      const onCopied = (e) => finish(typeof e.detail === "string" ? e.detail.trim() : null);
+      const timer = setTimeout(() => finish(null), CAPTURE_TIMEOUT_MS);
+
+      document.addEventListener("deafcs:copied", onCopied);
+      document.dispatchEvent(new CustomEvent("deafcs:capture-start"));
+      button.click();
+    });
   }
 
   async function writeClipboard(text) {
@@ -62,7 +71,7 @@
 
   // Clipboard needs focus/user activation; retry on interactions until a copy succeeds
   // (a single failed retry used to drop the copy for good).
-  function retryOnInteraction() {
+  function retryOnInteraction(text) {
     if (retrying) return;
     retrying = true;
     let busy = false;
@@ -73,12 +82,10 @@
     };
     async function retry() {
       if (busy) return;
-      const command = findConnect();
-      if (!isOn() || !isAlive() || !command) return done();
-      if (command !== lastCopied) return; // check() handles a new command itself
+      if (!isOn() || !isAlive() || !copyButton() || command !== text) return done();
       busy = true;
       try {
-        if (await copy(command)) done();
+        if (await copy(text)) done();
       } finally {
         busy = false;
       }
@@ -88,22 +95,33 @@
   }
 
   async function check() {
-    const command = findConnect();
-    if (!command) {
-      lastCopied = null;
+    const button = copyButton();
+    if (!button) {
+      handledMatch = null;
+      command = null;
       return;
     }
-    if (command === lastCopied) return;
-    lastCopied = command;
-    if (!(await copy(command))) {
+    const match = location.pathname;
+    if (handledMatch === match) return;
+    handledMatch = match;
+    command = null;
+
+    const text = await captureCommand(button);
+    if (handledMatch !== match || !isOn() || !isAlive()) return;
+    if (!text || !CONNECT_PATTERN.test(text)) {
+      deafcsWarn("copy-server-ip: no connect command from the copy button", text);
+      return;
+    }
+    command = text;
+    if (!(await copy(text))) {
       deafcsLog("copy-server-ip: clipboard blocked, will retry on interaction");
-      retryOnInteraction();
+      retryOnInteraction(text);
     }
   }
 
   const isOn = feature("copyServerIp", "copy-server-ip", {
     check,
-    observe: { childList: true, subtree: true, characterData: true }
+    observe: { childList: true, subtree: true }
   });
 
   deafcsLog("copy-server-ip.js loaded");

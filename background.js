@@ -5,10 +5,15 @@ deafcsLog("service worker loaded");
 // Chrome doesn't inject manifest content scripts into tabs that were already open when the
 // extension was installed or updated; without this those tabs need F5.
 async function injectIntoOpenTabs() {
-  for (const { matches, js } of chrome.runtime.getManifest().content_scripts) {
+  for (const { matches, js, world = "ISOLATED" } of chrome.runtime.getManifest().content_scripts) {
     for (const tab of await chrome.tabs.query({ url: matches })) {
       try {
         const target = { tabId: tab.id };
+        // MAIN-world scripts guard against running twice themselves.
+        if (world === "MAIN") {
+          await chrome.scripting.executeScript({ target, files: js, world });
+          continue;
+        }
         // Copies from before shared.js switched to "var" hold "const" globals in the same
         // isolated world, which a re-injected shared.js can't redeclare: leave those to F5.
         const [{ result: stale }] = await chrome.scripting.executeScript({
