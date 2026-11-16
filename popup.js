@@ -16,6 +16,7 @@ function render() {
   $("autoJoinServer").checked = state.autoJoinServer;
   $("queueDots").checked = state.queueDots;
   $("hideCancelled").checked = state.hideCancelled;
+  $("matchStats").checked = state.matchStats;
   $("autoReadyDelay").disabled = !state.autoReady;
   if (document.activeElement !== $("autoReadyDelay")) $("autoReadyDelay").value = state.autoReadyDelaySec;
 
@@ -28,7 +29,7 @@ $("updateLink").href = `${DEAFCS_REPO_URL}/releases/latest`;
 
 [$("autoReadyDelay").min, $("autoReadyDelay").max] = DEAFCS_LIMITS.autoReadyDelaySec;
 
-for (const key of ["autoReady", "copyServerIp", "autoJoinServer", "queueDots", "hideCancelled"]) {
+for (const key of ["autoReady", "copyServerIp", "autoJoinServer", "queueDots", "hideCancelled", "matchStats"]) {
   $(key).addEventListener("change", (e) => chrome.storage.local.set({ [key]: e.target.checked }));
 }
 

@@ -38,7 +38,8 @@
         "content-scripts/copy-server-ip.js",
         "content-scripts/auto-join.js",
         "content-scripts/queue-dots.js",
-        "content-scripts/hide-cancelled.js"
+        "content-scripts/hide-cancelled.js",
+        "content-scripts/match-stats.js"
       ],
       "run_at": "document_idle"
     }
