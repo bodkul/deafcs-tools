@@ -25,8 +25,6 @@ function render() {
   $("updateText").textContent = t("updateAvailable", { version: state.updateLatest });
 }
 
-$("updateLink").href = `${DEAFCS_REPO_URL}/releases/latest`;
-
 [$("autoReadyDelay").min, $("autoReadyDelay").max] = DEAFCS_LIMITS.autoReadyDelaySec;
 
 for (const key of ["autoReady", "copyServerIp", "autoJoinServer", "queueDots", "hideCancelled", "matchStats"]) {

@@ -24,7 +24,6 @@ var DEAFCS_DEFAULTS = {
 };
 
 // Unpacked installs don't auto-update, so the extension compares itself with the manifest on GitHub.
-var DEAFCS_REPO_URL = "https://github.com/bodkul/deafcs-tools";
 var DEAFCS_MANIFEST_URL = "https://raw.githubusercontent.com/bodkul/deafcs-tools/main/manifest.json";
 var DEAFCS_UPDATE_CHECK_MS = 24 * 60 * 60_000;
 
