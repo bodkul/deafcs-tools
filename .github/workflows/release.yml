@@ -1,5 +1,6 @@
-# On a v* tag: builds deafcs-tools-<version>.zip and publishes it as a GitHub Release.
-# The tag must match "version" in manifest.json (v1.2.3 <-> 1.2.3), otherwise the run fails.
+# On a v* tag: builds the Chrome and Firefox zips (plus the Firefox sources zip for AMO review)
+# with WXT and publishes them as a GitHub Release.
+# The tag must match "version" in package.json (v1.2.3 <-> 1.2.3), otherwise the run fails.
 name: Release
 
 on:
@@ -15,27 +16,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check tag matches manifest version
+      - name: Check tag matches package.json version
         id: version
         run: |
-          version="$(jq -r .version manifest.json)"
+          version="$(jq -r .version package.json)"
           if [ "$GITHUB_REF_NAME" != "v$version" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME doesn't match manifest.json version $version (expected v$version)"
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match package.json version $version (expected v$version)"
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      # Only the files the extension needs, with manifest.json at the zip root.
-      - name: Build zip
-        run: |
-          zip -r -X "deafcs-tools-${{ steps.version.outputs.version }}.zip" \
-            manifest.json background.js shared.js popup.html popup.js content-scripts icons LICENSE
-          unzip -l "deafcs-tools-${{ steps.version.outputs.version }}.zip"
+      # pnpm version comes from "packageManager" in package.json.
+      - uses: pnpm/action-setup@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Chrome: deafcs-tools-<version>-chrome.zip
+      # Firefox: deafcs-tools-<version>-firefox.zip and deafcs-tools-<version>-sources.zip
+      - name: Build zips
+        run: |
+          pnpm zip
+          pnpm zip:firefox
+          ls -l .output/*.zip
+
+      # The Chrome zip goes up first, alone: csdeaf.com/tools offers the release's first .zip asset
+      # as the download, so it must not be the Firefox or sources zip.
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "deafcs-tools-${{ steps.version.outputs.version }}.zip" \
+          gh release create "$GITHUB_REF_NAME" ".output/deafcs-tools-$VERSION-chrome.zip" \
             --title "$GITHUB_REF_NAME" \
             --notes "Installation: https://csdeaf.com/tools"
+          gh release upload "$GITHUB_REF_NAME" \
+            ".output/deafcs-tools-$VERSION-firefox.zip" \
+            ".output/deafcs-tools-$VERSION-sources.zip"
