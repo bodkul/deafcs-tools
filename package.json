@@ -1,9 +1,11 @@
 {
-  "name": "wxt-react-starter",
-  "version": "0.0.0",
+  "name": "deafcs-tools",
+  "version": "1.3.0",
   "private": true,
-  "description": "manifest.json description",
+  "description": "Auto-Ready, Copy Server IP and Auto Join Server for DeafCS.",
+  "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@12.21.0",
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
