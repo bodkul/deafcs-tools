@@ -1,6 +1,7 @@
 # DeafCS Tools
 
-Browser extension (Chrome and Firefox) for [DeafCS](https://deafcs.net) players: Auto-Ready, Copy Server IP, Auto Join Server.
+Browser extension (Chrome and Firefox) for [DeafCS](https://deafcs.net) players: Auto-Ready, Player & Map Stats, Copy Server IP, Auto Join Server,
+Queue Dots and Hide Cancelled Matches.
 
 ## Install
 

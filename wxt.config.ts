@@ -9,7 +9,7 @@ export default defineConfig({
   }),
   manifest: ({ browser }) => ({
     name: 'DeafCS Tools',
-    description: 'Auto-Ready, Copy Server IP and Auto Join Server for DeafCS.',
+    description: 'Helper for DeafCS players: auto-accept, player and map stats, server IP copy and auto-join, queue dots.',
     // "scripting" is for Chrome only: the background injects the content script into tabs open at
     // install time. Firefox does that itself, and that code isn't in the Firefox build.
     permissions: ['storage', 'clipboardWrite', ...(browser === 'firefox' ? [] : ['scripting'])],

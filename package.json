@@ -2,7 +2,7 @@
   "name": "deafcs-tools",
   "version": "1.3.0",
   "private": true,
-  "description": "Auto-Ready, Copy Server IP and Auto Join Server for DeafCS.",
+  "description": "Helper for DeafCS players: auto-accept, player and map stats, server IP copy and auto-join, queue dots.",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@12.21.0",
