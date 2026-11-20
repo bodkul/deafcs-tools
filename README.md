@@ -35,6 +35,7 @@ Layout:
 - `components/ui/`: [shadcn/ui](https://ui.shadcn.com) components on [Base UI](https://base-ui.com) (style `base-nova`); add more with `pnpm shadcn add <name>`. They import `cn()` straight from the [`cn`](https://github.com/shadcn-ui/cn) package.
 - `entrypoints/background.ts`: update check; in Chrome, injects the content script into tabs open at install time.
 - `utils/shared.ts`: settings, defaults, translations, logging.
+- `store/`: store listing texts (Firefox Add-ons); not part of the build.
 
 To release: bump `version` in `package.json` and in the root `manifest.json`, push to `main`, then push the tag
 `v<version>`. The Release workflow attaches the Chrome zip, the Firefox zip and the sources zip to a GitHub release, and
