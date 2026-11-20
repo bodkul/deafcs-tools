@@ -29,7 +29,8 @@ Layout:
 
 - `entrypoints/deafcs.content/`: the deafcs.net content script (plain TypeScript), one module per feature.
 - `entrypoints/copy-hook.ts`: patches the site's clipboard calls in the page's main world; injected by the content script.
-- `entrypoints/popup/`: settings popup (React).
+- `entrypoints/popup/`: settings popup (React, Tailwind CSS v4, theme in `style.css`).
+- `components/ui/`: [shadcn/ui](https://ui.shadcn.com) components on [Base UI](https://base-ui.com) (style `base-nova`); add more with `pnpm shadcn add <name>`. They import `cn()` straight from the [`cn`](https://github.com/shadcn-ui/cn) package.
 - `entrypoints/background.ts`: update check; in Chrome, injects the content script into tabs open at install time.
 - `utils/shared.ts`: settings, defaults, translations, logging.
 
