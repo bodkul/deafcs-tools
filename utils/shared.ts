@@ -30,7 +30,20 @@ export const isSettingKey = (key: string): key is SettingKey => key in DEFAULTS;
 const LATEST_URL = 'https://raw.githubusercontent.com/bodkul/deafcs-tools/main/package.json';
 export const UPDATE_CHECK_MS = 24 * 60 * 60_000;
 
+// Installed by hand: "Load unpacked" in Chrome, a temporary add-on in Firefox. Store installs
+// (Chrome Web Store, AMO) are "normal" and update themselves, so they skip the GitHub check and
+// never show the banner. getSelf needs no "management" permission.
+export async function isManualInstall() {
+  try {
+    return (await browser.management.getSelf()).installType === 'development';
+  } catch (e) {
+    warn('install type unknown, assuming a manual install', (e as Error).message);
+    return true;
+  }
+}
+
 export async function checkUpdate() {
+  if (!(await isManualInstall())) return;
   try {
     const res = await fetch(LATEST_URL, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
