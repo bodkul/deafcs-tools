@@ -6,6 +6,7 @@ Browser extension (Chrome and Firefox) for [DeafCS](https://deafcs.net) players:
 
 - Download: **https://github.com/bodkul/deafcs-tools/releases/latest**
 - Guide and features: **https://csdeaf.com/tools**
+- Privacy policy: [PRIVACY.md](PRIVACY.md)
 
 ## Development
 
