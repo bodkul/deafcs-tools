@@ -22,6 +22,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from 'cn';
 import {
   checkUpdate,
+  clamp,
   DEFAULTS,
   isNewer,
   isSettingKey,
@@ -100,7 +101,8 @@ export default function App() {
   };
   // Compared with the running version, so the banner disappears by itself once the user updates.
   const updateAvailable = isNewer(state.updateLatest, VERSION);
-  const delay = state.autoReadyDelaySec;
+  // Clamped: values saved before the range changed may lie outside it.
+  const delay = clamp('autoReadyDelaySec', state.autoReadyDelaySec);
 
   return (
     <>
@@ -173,7 +175,7 @@ export default function App() {
                           {t('delay')}
                         </span>
                         <span className="font-bold text-primary tabular-nums">
-                          {delay === 0 ? t('delayNone') : t('delayValue', { n: delay })}
+                          {t('delayValue', { n: delay })}
                         </span>
                       </div>
                       <Slider

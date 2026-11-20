@@ -55,7 +55,7 @@ export function isNewer(a: unknown, b: unknown) {
 
 // Allowed [min, max] for numeric settings; the popup and content script clamp to these.
 export const LIMITS = {
-  autoReadyDelaySec: [0, 30],
+  autoReadyDelaySec: [1, 10],
 } satisfies Partial<Record<SettingKey, [number, number]>>;
 
 // Rounds and clamps a numeric setting; falls back to the default for non-numbers.
@@ -75,7 +75,6 @@ const STRINGS = {
     autoReadyDesc: "Accepts the match when it's found",
     delay: 'Delay before accepting',
     delayValue: '{n} sec',
-    delayNone: 'instantly',
     copyServerIp: 'Copy Server IP',
     copyServerIpDesc: 'Copies connect once the server is up',
     autoJoinServer: 'Auto Join Server',
@@ -108,7 +107,6 @@ const STRINGS = {
     autoReadyDesc: 'Сам нажимает READY, когда матч найден',
     delay: 'Задержка перед принятием',
     delayValue: '{n} сек',
-    delayNone: 'сразу',
     copyServerIp: 'Копировать IP сервера',
     copyServerIpDesc: 'Копирует connect, когда сервер готов',
     autoJoinServer: 'Автоподключение',
