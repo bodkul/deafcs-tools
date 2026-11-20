@@ -34,9 +34,13 @@ Layout:
 - `entrypoints/background.ts`: update check; in Chrome, injects the content script into tabs open at install time.
 - `utils/shared.ts`: settings, defaults, translations, logging.
 
-To release: bump `version` in `package.json`, push to `main`, then push the tag `v<version>`. The Release workflow
-attaches the Chrome zip, the Firefox zip and the sources zip to a GitHub release, and fails if the tag doesn't match the
-`package.json` version.
+To release: bump `version` in `package.json` and in the root `manifest.json`, push to `main`, then push the tag
+`v<version>`. The Release workflow attaches the Chrome zip, the Firefox zip and the sources zip to a GitHub release, and
+fails if the tag doesn't match the `package.json` version or `manifest.json` differs from it.
+
+The root `manifest.json` holds only the version and isn't part of the extension (WXT builds the real manifest from
+`wxt.config.ts`). Releases up to 1.2.1 read it from `main` to find updates; newer ones read `package.json`. Manual installs
+only: store installs update through the store and skip the check.
 
 Logs in DevTools are prefixed with `[deafcs-tools]`. Saved deafcs.net pages for testing selectors go into `fixtures/`
 (gitignored: they may contain real player data, never commit them).

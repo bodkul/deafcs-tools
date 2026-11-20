@@ -1,6 +1,7 @@
 # On a v* tag: builds the Chrome and Firefox zips (plus the Firefox sources zip for AMO review)
 # with WXT and publishes them as a GitHub Release.
-# The tag must match "version" in package.json (v1.2.3 <-> 1.2.3), otherwise the run fails.
+# The tag must match "version" in package.json (v1.2.3 <-> 1.2.3), and the root manifest.json must
+# have the same version, otherwise the run fails.
 name: Release
 
 on:
@@ -25,6 +26,15 @@ jobs:
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # Releases up to 1.2.1 look for updates in manifest.json at the repo root on main.
+      - name: Check legacy manifest.json version
+        run: |
+          legacy="$(jq -r .version manifest.json)"
+          if [ "$legacy" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::manifest.json version $legacy doesn't match package.json; 1.2.1 and older installs read it to find updates"
+            exit 1
+          fi
 
       # pnpm version comes from "packageManager" in package.json.
       - uses: pnpm/action-setup@v4
