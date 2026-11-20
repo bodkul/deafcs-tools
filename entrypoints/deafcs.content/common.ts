@@ -121,7 +121,11 @@ export function createCommon(ctx: ContentScriptContext) {
       'background:transparent;overflow:visible;z-index:2147483647;pointer-events:none';
 
     const root = toastHost.attachShadow({ mode: 'open' });
-    root.innerHTML = `<style>${TOAST_CSS}</style><div class="list"></div>`;
+    const style = document.createElement('style');
+    style.textContent = TOAST_CSS;
+    const list = document.createElement('div');
+    list.className = 'list';
+    root.append(style, list);
 
     document.documentElement.appendChild(toastHost);
     // Top layer renders above everything regardless of the site's z-index/transform/overflow.
@@ -137,8 +141,13 @@ export function createCommon(ctx: ContentScriptContext) {
     const host = toastHost!;
     const el = document.createElement('div');
     el.className = 'toast';
-    el.innerHTML = '<span class="icon">✓</span><span class="text"></span>';
-    el.querySelector('.text')!.textContent = text;
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '✓';
+    const label = document.createElement('span');
+    label.className = 'text';
+    label.textContent = text;
+    el.append(icon, label);
     list.appendChild(el);
 
     el.getBoundingClientRect(); // force layout so the fade-in transition runs

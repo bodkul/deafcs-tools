@@ -121,8 +121,16 @@ const idsIn = (root: Element | null): string[] =>
 
 const pct = (part: number, whole: number) => Math.round((part * 100) / whole);
 
+// Builds an element. Strings go in as text, never as HTML: API values can't inject markup.
+function h(tag: string, attrs: Record<string, string>, ...children: (Node | string)[]) {
+  const el = document.createElement(tag);
+  for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value);
+  el.append(...children);
+  return el;
+}
+
 // Writes only when something changed, so our own mutations don't loop the observer.
-function put(host: Element, kind: string, key: string, html: string, title: string) {
+function put(host: Element, kind: string, key: string, content: (Node | string)[], title: string) {
   let el = host.querySelector<HTMLElement>(`:scope > [${MARK}="${kind}"]`);
   if (!el) {
     el = document.createElement('div');
@@ -131,7 +139,7 @@ function put(host: Element, kind: string, key: string, html: string, title: stri
   }
   if (el.dataset.key === key) return;
   el.dataset.key = key;
-  el.innerHTML = html;
+  el.replaceChildren(...content);
   el.title = title;
 }
 
@@ -141,8 +149,6 @@ const mapOf = (tile: Element) =>
     .querySelector('img')
     ?.getAttribute('src')
     ?.match(/\/([\w-]+)\.\w+(?:\?|$)/)?.[1];
-
-const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 // Tag ("PT"), name and color of each team, as the site shows them: the tag on the pick ledger,
 // the color in the team panel's --accent (an "h s% l%" triple). Falls back to 1/2 and white.
@@ -155,7 +161,7 @@ function teamLabels() {
     const accent = panel ? getComputedStyle(panel).getPropertyValue('--accent').trim() : '';
     const name = panel?.querySelector('h3')?.textContent?.trim() || ledger?.title || `${i + 1}`;
     return {
-      tag: escapeHtml(ledger?.textContent?.trim() || `${i + 1}`),
+      tag: ledger?.textContent?.trim() || `${i + 1}`,
       name,
       color: /^[\d.]+(deg)?\s+[\d.]+%\s+[\d.]+%$/.test(accent) ? `hsl(${accent})` : '#fff',
     };
@@ -206,12 +212,16 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
 
   function playerBlock(form: PlayerForm, queue: Queue) {
     const name = QUEUE_NAMES[queue];
-    if (!form.matches) return { html: '—', title: t('statsNoMatches', { queue: name }) };
+    if (!form.matches) return { content: ['—'], title: t('statsNoMatches', { queue: name }) };
     const hs = form.headshotRate == null ? '—' : `${form.headshotRate}%`;
+    const stat = (value: string, label: string) => h('span', {}, h('b', {}, value), ` ${label}`);
     return {
-      html:
-        `<span><b>${form.kd.toFixed(2)}</b> K/D</span><span><b>${Math.round(form.adr)}</b> ADR</span>` +
-        `<span><b>${pct(form.wins, form.matches)}%</b> WR</span><span><b>${hs}</b> HS</span>`,
+      content: [
+        stat(Number(form.kd).toFixed(2), 'K/D'),
+        stat(String(Math.round(form.adr)), 'ADR'),
+        stat(`${pct(form.wins, form.matches)}%`, 'WR'),
+        stat(hs, 'HS'),
+      ],
       title: t('statsPlayerTitle', {
         matches: form.matches,
         queue: name,
@@ -227,12 +237,12 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
       const host = card.querySelector('.draft-player-card') || card.firstElementChild;
       const form = cached(queue, id)?.form;
       if (!host || !form) continue;
-      const { html, title } = playerBlock(form, queue);
+      const { content, title } = playerBlock(form, queue);
       put(
         host,
         'player',
         `${queue}:${id}:${form.matches}:${form.kd}:${form.adr}:${form.wins}:${form.headshotRate}`,
-        html,
+        content,
         title,
       );
     }
@@ -269,16 +279,14 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
       const rates = records.map((r) => (r.matches ? pct(r.wins, r.matches) : null));
       const best =
         rates[0] != null && rates[1] != null && rates[0] !== rates[1] ? (rates[0] > rates[1] ? 0 : 1) : -1;
-      const html = records
-        .map((r, i) => {
-          const { tag, color } = labels[i]!;
-          return (
-            `<span class="tag" style="--team:${color}">${tag}</span>` +
-            `<span class="rate${i === best ? ' best' : ''}">${rates[i] == null ? '—' : `${rates[i]}%`}</span>` +
-            `<span class="n">${t('statsOfMatches', { n: r.matches })}</span>`
-          );
-        })
-        .join('');
+      const content = records.flatMap((r, i) => {
+        const { tag, color } = labels[i]!;
+        return [
+          h('span', { class: 'tag', style: `--team:${color}` }, tag),
+          h('span', { class: i === best ? 'rate best' : 'rate' }, rates[i] == null ? '—' : `${rates[i]}%`),
+          h('span', { class: 'n' }, t('statsOfMatches', { n: r.matches })),
+        ];
+      });
       const line = (i: number) =>
         `${labels[i]!.name}: ${
           rates[i] == null
@@ -291,7 +299,7 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
         tile,
         'map',
         `${queue}:${map}:${rates}:${records.map((r) => r.matches)}:${labels.map((l) => l.tag)}`,
-        html,
+        content,
         title,
       );
     }
