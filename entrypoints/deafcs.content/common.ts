@@ -11,7 +11,8 @@ export interface FeatureOptions {
   onDisable?: () => void;
 }
 
-// shadcn/ui (Sonner) look, zinc theme. Shadow DOM isolates it from site CSS.
+// Same dark theme and amber accent as the popup (entrypoints/popup/style.css). Always dark: the
+// site is dark too. Shadow DOM isolates it from site CSS.
 const TOAST_CSS = `
   :host { all: initial; }
   .list { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
@@ -20,13 +21,13 @@ const TOAST_CSS = `
     align-items: center;
     gap: 10px;
     min-width: 220px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid hsl(240 5.9% 90%);
-    background: hsl(0 0% 100%);
-    color: hsl(240 10% 3.9%);
-    font: 500 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
-    box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+    padding: 11px 16px 11px 12px;
+    border-radius: 12px;
+    border: 1px solid rgb(245 165 36 / 0.35);
+    background: #12151c;
+    color: #eef1f6;
+    font: 600 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.5), 0 0 18px rgb(245 165 36 / 0.15);
     opacity: 0;
     transform: translateY(8px);
     transition: opacity 0.2s, transform 0.2s;
@@ -36,21 +37,13 @@ const TOAST_CSS = `
     flex: none;
     display: grid;
     place-items: center;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     border-radius: 9999px;
-    background: hsl(38 92% 50%);
-    color: hsl(240 10% 3.9%);
+    background: #f5a524;
+    color: #1a1204;
     font-size: 12px;
-    font-weight: 700;
-  }
-  /* Lighter than shadcn's dark card so it stands out on the site's dark background. */
-  @media (prefers-color-scheme: dark) {
-    .toast {
-      border-color: hsl(240 5% 30%);
-      background: hsl(240 5.9% 16%);
-      color: hsl(0 0% 98%);
-    }
+    font-weight: 800;
   }
 `;
 
