@@ -37,6 +37,7 @@ export default defineConfig({
   }),
   zip: {
     // Local saved deafcs.net pages may contain real player data: never ship them in the sources zip.
-    excludeSources: ['fixtures/**'],
+    // Store listing texts and screenshots aren't needed to build the add-on.
+    excludeSources: ['fixtures/**', 'store/**'],
   },
 });
