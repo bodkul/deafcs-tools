@@ -55,8 +55,10 @@ variables or `.env` files are used.
 
 Requirements:
 
+- Any OS that runs Node.js: Windows, macOS or Linux (built on Windows 11 x64)
 - Node.js 26 (built with 26.7.0)
 - pnpm 12.21.0 (`npm install -g pnpm@12.21.0`)
+- Internet access for `pnpm install` (packages come from the npm registry, pinned by `pnpm-lock.yaml`)
 
 Build:
 
