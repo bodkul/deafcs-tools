@@ -77,6 +77,18 @@ DeafCS Tools упрощает игру на deafcs.net. Каждую функц�
 Исходный код: https://github.com/bodkul/deafcs-tools
 ```
 
+## Screenshots
+
+1280x800 PNGs in [screenshots/](screenshots/), made from the real popup build. Upload in this order, with these captions:
+
+| File | Caption (en-US) | Caption (ru) |
+|---|---|---|
+| `1-popup-en.png` | Every feature in one popup: turn each on or off | Все функции в одном попапе |
+| `2-popup-ru.png` | Available in English and Russian | Доступно на русском и английском |
+| `3-toasts-en.png` | Notifications on deafcs.net when the IP is copied and the server is joining | Уведомления на deafcs.net: IP скопирован, подключение к серверу |
+
+Stats on the captain pick and map veto can only be captured during a live match.
+
 ## Release notes
 
 One entry per version, newest first; paste the current one into "Version notes" on upload.
