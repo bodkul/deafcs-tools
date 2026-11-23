@@ -99,6 +99,7 @@ One entry per version, newest first; paste the current one into "Version notes" 
 First release on Firefox Add-ons.
 • New popup: features grouped into Match and Site, with descriptions; Auto-Ready delay slider (1–10 s).
 • Player & Map Stats on the captain pick and map veto.
+• Queue Dots work on the Russian matchmaking screen too.
 • Toasts on deafcs.net match the new dark theme.
 ```
 

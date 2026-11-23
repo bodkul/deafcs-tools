@@ -23,8 +23,12 @@ const CSS = `
 `;
 
 // Matchmaking screen after "Find match": the tiles are gone, and the count is in a line next to
-// the diagram, "FRANKFURT #2 · 7 in queue".
-const IN_QUEUE = /(?:^|[^\d#])(\d+)\s+in queue/i;
+// the diagram, "FRANKFURT #2 · 7 in queue" (English) or "FRANKFURT #2 · В очереди: 7" (Russian).
+const IN_QUEUE = /(?:^|[^\d#])(\d+)\s+in queue|в очереди:?\s*(\d+)/iu;
+const queueNumber = (text: string) => {
+  const m = text.match(IN_QUEUE);
+  return m ? Number(m[1] ?? m[2]) : undefined;
+};
 
 function ensureStyle() {
   if (document.getElementById(STYLE_ID)) return;
@@ -54,7 +58,7 @@ function searchingCount(diagram: Element) {
       line = inner;
       inner = [...line.children].find((c) => IN_QUEUE.test(c.textContent ?? ''));
     }
-    return Number((line.textContent ?? '').match(IN_QUEUE)![1]);
+    return queueNumber(line.textContent ?? '');
   }
   return undefined;
 }
