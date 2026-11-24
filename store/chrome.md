@@ -31,7 +31,7 @@ DeafCS Tools makes playing on deafcs.net easier. Every feature can be turned on 
 
 MATCH
 • Auto-Ready: presses READY when a match is found, after a delay you choose (1–10 seconds).
-• Player & Map Stats: on the captain pick and in the warmup scoreboard, shows K/D, ADR, win rate and headshot rate of each player over their last 30 matches in the queue; on the map veto, shows each team's win rate on every map.
+• Player & Map Stats: from the captain pick to the end of the match, shows K/D, ADR, win rate and headshot rate of each player over their last 30 matches in the queue (on the player cards, then in the scoreboard); on the map veto, shows each team's win rate on every map.
 • Copy Server IP: when the match server is ready, copies the connect command to your clipboard.
 • Auto Join Server: presses the site's Join Server button for you once the server is ready (off by default).
 
@@ -51,7 +51,7 @@ DeafCS Tools упрощает игру на deafcs.net. Каждую функц�
 
 МАТЧ
 • Авто-принятие матча: сам нажимает READY, когда матч найден, через выбранную задержку (1–10 секунд).
-• Статистика игроков и карт: на пике капитанов и в таблице на разминке — K/D, ADR, винрейт и процент хедшотов каждого игрока за последние 30 матчей в очереди; в вето карт — винрейт каждой команды на каждой карте.
+• Статистика игроков и карт: от пика капитанов до конца матча — K/D, ADR, винрейт и процент хедшотов каждого игрока за последние 30 матчей в очереди (на карточках игроков, потом в таблице результатов); в вето карт — винрейт каждой команды на каждой карте.
 • Копировать IP сервера: когда сервер матча готов, копирует команду connect в буфер обмена.
 • Автоподключение: сам нажимает кнопку сайта Join Server, когда сервер готов (по умолчанию выключено).
 
