@@ -3,8 +3,8 @@
 Texts and answers for the Chrome Web Store developer dashboard. Upload `.output/deafcs-tools-<version>-chrome.zip`
 (from `pnpm zip`). The store doesn't take source code.
 
-**Before submitting:** the privacy policy needs a public URL, so submit after `main` with PRIVACY.md is pushed (the
-GitHub release of the same version). A developer account costs a one-time $5 registration fee.
+**Before submitting:** the privacy policy needs a public URL; PRIVACY.md is on GitHub `main` (see the Privacy
+practices tab). A developer account costs a one-time $5 registration fee.
 
 ## Store listing tab
 
@@ -109,7 +109,7 @@ Certify all three:
 - [x] I do not use or transfer user data for purposes that are unrelated to my item's single purpose
 - [x] I do not use or transfer user data to determine creditworthiness or for lending purposes
 
-**Privacy policy URL:** https://github.com/bodkul/deafcs-tools/blob/main/PRIVACY.md (works once `main` is pushed)
+**Privacy policy URL:** https://github.com/bodkul/deafcs-tools/blob/main/PRIVACY.md (published on `origin/main` on 2026-11-24, ahead of the rest of 1.3.1)
 
 ## Distribution tab
 
