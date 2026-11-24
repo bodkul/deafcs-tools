@@ -74,7 +74,7 @@ Helps players of deafcs.net, a Counter-Strike 2 matchmaking site: automates the 
 
 **storage**
 ```
-Saves the user's settings (language, which features are on, Auto-Ready delay) and the ID of the last match Auto Join Server joined, so a page reload doesn't join it twice. Local storage only, not synced.
+Saves the user's settings (language, which features are on, Auto-Ready delay), the ID of the last match Auto Join Server joined, so a page reload doesn't join it twice, and the result of the update check for manual installs. Local storage only, not synced.
 ```
 
 **clipboardWrite**
@@ -89,7 +89,7 @@ After the extension is installed or updated, the background script injects the c
 
 **Host permission (https://*.deafcs.net/*)**
 ```
-The content script runs only on deafcs.net: it reads the match page (Match Found dialog, captain pick, map veto, server bar) and presses the site's own buttons. No other sites are accessed.
+The content script runs only on deafcs.net: it reads the match page (Match Found dialog, captain pick, map veto, server bar, scoreboard), the Play page (queue counts) and player pages (match history), and presses the site's own buttons. No other sites are accessed.
 ```
 
 **Remote code:** No, I am not using remote code. (The extension fetches only JSON data from api.csdeaf.com; all code is in the package.)
