@@ -2,7 +2,8 @@ import { clamp, DEFAULTS, log } from '@/utils/shared';
 import type { Common } from './common';
 
 const READY_BUTTON_SELECTOR = 'button.tac-amber-cta';
-const READY_BUTTON_TEXT = /^\s*ready\s*$/i;
+// Fallback when the button loses its class: "Ready" in English, "Готов" in Russian.
+const READY_BUTTON_TEXT = /^\s*(?:ready|готов)\s*$/iu;
 const JITTER_MS = 700;
 
 export function autoReady({ isAlive, onSettings, isVisible, feature, matchFoundDialogs }: Common) {

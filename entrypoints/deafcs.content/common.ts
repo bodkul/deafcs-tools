@@ -48,7 +48,8 @@ const TOAST_CSS = `
 `;
 
 // "Match Found" dialogs (used by Auto-Ready and Auto Join).
-const MATCH_FOUND_TEXT = /match found/i;
+// The site in English or Russian.
+const MATCH_FOUND_TEXT = /match found|матч найден/iu;
 
 // Match page: https://deafcs.net/matches/<id>. Other pages (server lists etc.) may have their own
 // copy-IP and Join buttons, so match features only run here. Checked on every call:
