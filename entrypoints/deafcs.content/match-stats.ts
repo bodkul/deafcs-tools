@@ -2,9 +2,10 @@ import { log, warn } from '@/utils/shared';
 import type { Common } from './common';
 
 // Recent form of the match players, from csdeaf.com (which reads the deafcs.net API): K/D, ADR,
-// win and headshot rate next to every free player on the captain pick, and each team's win rate
-// per map on the map veto. Counted over the newest 30 matches in the queue of this match
-// (Competitive, Pro, Wingman and Duel apart).
+// win and headshot rate on every player card from the captain pick through the veto (free players
+// and team panels) and under every player on the scoreboard while the server bar is up (warmup
+// and live), and each team's win rate per map on the map veto. Counted over the newest 30 matches in the queue of this match (Competitive, Pro,
+// Wingman and Duel apart).
 const STATS_URL = 'https://api.csdeaf.com/api/deafcs/stats';
 const MAX_IDS = 10; // per request, the server's limit
 const FRESH_MS = 5 * 60_000; // the server caches 5 minutes too
@@ -17,6 +18,11 @@ const MIDDLE = '[data-testid="overview-middle"]'; // free players while captains
 const PICK_CARD = '[data-testid^="captain-pick-player-"]';
 const VETO_MAP = '[data-testid^="veto-map-"]';
 const PLAYER_LINK = 'a[href^="/players/"]';
+// The pick and veto panels are gone once the server is up; the scoreboard tab (one tbody per
+// team, the player in the first, sticky cell) is all that lists the players then. Only while the
+// server bar is shown, so finished matches keep their scoreboard as it is.
+const SERVER_BAR = '[data-server-bar]';
+const BOARD_ROW = '[id$="-content-scoreboard"] tbody > tr';
 
 const MARK = 'data-deafcs-stats';
 const STYLE_ID = 'deafcs-match-stats';
@@ -38,12 +44,25 @@ const CSS = `
     justify-content: space-between;
     gap: 6px;
     padding: 0 2px;
-    font: 500 11px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+    font: 500 12px/1.25 system-ui, -apple-system, "Segoe UI", sans-serif;
     font-variant-numeric: tabular-nums;
     color: hsl(var(--muted-foreground));
     white-space: nowrap;
   }
   [${MARK}="player"] b { color: hsl(var(--foreground)); font-weight: 600; }
+  /* Under the player in the scoreboard's name cell (220px, 110px on phones: wraps there).
+     The margin clears the career level badge, which hangs 6px below the avatar. */
+  [${MARK}="row"] {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 7px;
+    margin-top: 6px;
+    font: 500 12px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-variant-numeric: tabular-nums;
+    color: hsl(var(--foreground) / 0.6);
+  }
+  [${MARK}="row"] > span { white-space: nowrap; }
+  [${MARK}="row"] b { color: hsl(var(--foreground)); font-weight: 600; }
   /* One row per team: "PT  80%  из 5" (team tag in the team's color, win rate, matches). */
   [${MARK}="map"] {
     position: absolute;
@@ -118,6 +137,17 @@ const idsIn = (root: Element | null): string[] =>
   root
     ? [...new Set([...root.querySelectorAll(PLAYER_LINK)].map(steamIdOf).filter((id): id is string => !!id))]
     : [];
+
+// Name cells of the scoreboard with their player's Steam ID, while the server bar is shown.
+function boardCells() {
+  if (!document.querySelector(SERVER_BAR)) return [];
+  return [...document.querySelectorAll<HTMLTableRowElement>(BOARD_ROW)].flatMap((row) => {
+    const cell = row.cells[0];
+    const link = cell?.querySelector(PLAYER_LINK);
+    const id = link && steamIdOf(link);
+    return cell && id ? [{ cell, id }] : [];
+  });
+}
 
 const pct = (part: number, whole: number) => Math.round((part * 100) / whole);
 
@@ -231,21 +261,41 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
     };
   }
 
+  function renderForm(host: Element, kind: string, queue: Queue, id: string) {
+    const form = cached(queue, id)?.form;
+    if (!form) return;
+    const { content, title } = playerBlock(form, queue);
+    put(
+      host,
+      kind,
+      `${queue}:${id}:${form.matches}:${form.kd}:${form.adr}:${form.wins}:${form.headshotRate}`,
+      content,
+      title,
+    );
+  }
+
   function renderPick(queue: Queue) {
     for (const card of document.querySelectorAll<HTMLElement>(PICK_CARD)) {
       const id = card.dataset.testid!.slice('captain-pick-player-'.length);
       const host = card.querySelector('.draft-player-card') || card.firstElementChild;
-      const form = cached(queue, id)?.form;
-      if (!host || !form) continue;
-      const { content, title } = playerBlock(form, queue);
-      put(
-        host,
-        'player',
-        `${queue}:${id}:${form.matches}:${form.kd}:${form.adr}:${form.wins}:${form.headshotRate}`,
-        content,
-        title,
-      );
+      if (host) renderForm(host, 'player', queue, id);
     }
+  }
+
+  // Picked players, in their team's panel: the same cards as on the pick, from the first pick
+  // through the veto.
+  function renderTeams(queue: Queue) {
+    for (const sel of TEAM_SELECTORS) {
+      for (const card of document.querySelectorAll(`${sel} .draft-player-card`)) {
+        const link = card.querySelector(PLAYER_LINK);
+        const id = link && steamIdOf(link);
+        if (id) renderForm(card, 'player', queue, id);
+      }
+    }
+  }
+
+  function renderBoard(queue: Queue, cells: { cell: Element; id: string }[]) {
+    for (const { cell, id } of cells) renderForm(cell, 'row', queue, id);
   }
 
   // Map record of a team: wins and matches of its players on the map, added up.
@@ -310,15 +360,22 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
     const queue = matchQueue();
     const picking = document.querySelector(PICK_CARD);
     const veto = document.querySelector(VETO_MAP);
-    if (!queue || (!picking && !veto)) return;
-
+    const board = boardCells();
+    // The server bar went away (match over): the scoreboard has real numbers now.
+    if (!board.length) for (const el of document.querySelectorAll(`[${MARK}="row"]`)) el.remove();
     const teams = TEAM_SELECTORS.map((sel) => idsIn(document.querySelector(sel)));
-    const all = [...new Set([...teams.flat(), ...idsIn(document.querySelector(MIDDLE))])];
+    if (!queue || (!picking && !veto && !board.length && !teams.flat().length)) return;
+
+    const all = [
+      ...new Set([...teams.flat(), ...idsIn(document.querySelector(MIDDLE)), ...board.map((b) => b.id)]),
+    ];
     load(queue, all, check);
 
     ensureStyle();
     if (picking) renderPick(queue);
+    renderTeams(queue);
     if (veto && teams.every((ids) => ids.length)) renderVeto(queue, teams);
+    if (board.length) renderBoard(queue, board);
   }
 
   feature('matchStats', 'match-stats', {

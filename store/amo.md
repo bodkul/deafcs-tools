@@ -40,7 +40,7 @@ DeafCS Tools makes playing on deafcs.net easier. Every feature can be turned on 
 
 **Match**
 • Auto-Ready: presses READY when a match is found, after a delay you choose (1–10 seconds).
-• Player & Map Stats: on the captain pick, shows K/D, ADR, win rate and headshot rate of each player over their last 30 matches in the queue; on the map veto, shows each team's win rate on every map.
+• Player & Map Stats: on the captain pick and in the warmup scoreboard, shows K/D, ADR, win rate and headshot rate of each player over their last 30 matches in the queue; on the map veto, shows each team's win rate on every map.
 • Copy Server IP: when the match server is ready, copies the connect command to your clipboard.
 • Auto Join Server: presses the site's Join Server button for you once the server is ready (off by default).
 
@@ -62,7 +62,7 @@ DeafCS Tools упрощает игру на deafcs.net. Каждую функц�
 
 **Матч**
 • Авто-принятие матча: сам нажимает READY, когда матч найден, через выбранную задержку (1–10 секунд).
-• Статистика игроков и карт: на пике капитанов показывает K/D, ADR, винрейт и процент хедшотов каждого игрока за его последние 30 матчей в очереди; в вето карт — винрейт каждой команды на каждой карте.
+• Статистика игроков и карт: на пике капитанов и в таблице на разминке показывает K/D, ADR, винрейт и процент хедшотов каждого игрока за его последние 30 матчей в очереди; в вето карт — винрейт каждой команды на каждой карте.
 • Копировать IP сервера: когда сервер матча готов, копирует команду connect в буфер обмена.
 • Автоподключение: сам нажимает кнопку сайта Join Server, когда сервер готов (по умолчанию выключено).
 
@@ -98,7 +98,7 @@ One entry per version, newest first; paste the current one into "Version notes" 
 ```
 First release on Firefox Add-ons.
 • New popup: features grouped into Match and Site, with descriptions; Auto-Ready delay slider (1–10 s).
-• Player & Map Stats on the captain pick and map veto.
+• Player & Map Stats from the captain pick to the end of the match: on every player card during the pick and veto, and in the scoreboard during the warmup and the match.
 • Auto-Ready and Queue Dots work on the Russian site too.
 • Toasts on deafcs.net match the new dark theme.
 ```

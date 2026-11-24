@@ -29,8 +29,8 @@ account, cookies or passwords.
 
 ## Data sent to our server
 
-**Player & Map Stats** (on by default). On a deafcs.net match page, during the captain pick and the map veto, the
-extension sends to `https://api.csdeaf.com`:
+**Player & Map Stats** (on by default). On a deafcs.net match page, during the captain pick, the map veto and the
+warmup, the extension sends to `https://api.csdeaf.com`:
 
 - the Steam IDs of the players in the match, as shown on that page (public 17-digit IDs, at most 10 per request);
 - the queue type of the match (Competitive, Pro, Wingman or Duel).
@@ -96,8 +96,8 @@ deafcs.net, cookies и пароли.
 
 ## Что отправляется на наш сервер
 
-**«Статистика игроков и карт»** (включена по умолчанию). На странице матча deafcs.net, во время пика капитанов и
-вето карт, расширение отправляет на `https://api.csdeaf.com`:
+**«Статистика игроков и карт»** (включена по умолчанию). На странице матча deafcs.net, во время пика капитанов,
+вето карт и разминки, расширение отправляет на `https://api.csdeaf.com`:
 
 - Steam ID игроков матча, которые показаны на этой странице (публичные 17-значные ID, не больше 10 за запрос);
 - тип очереди матча (Competitive, Pro, Wingman или Duel).
