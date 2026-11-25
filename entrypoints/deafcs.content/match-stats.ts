@@ -9,7 +9,9 @@ import type { Common } from './common';
 // this match (Competitive, Pro, Wingman and Duel apart). Also: each player's roles (sniper, entry,
 // clutcher, support, anchor, worked out by the server) under their stats, the team's averages
 // under its panel header, and on the veto the map each team should ban or keep.
-const STATS_URL = 'https://api.csdeaf.com/api/deafcs/stats';
+// `pnpm dev` asks a local csdeaf (its Aspire AppHost): the web app on https://localhost:5173 proxies
+// /api to the Api, whose own port changes on every run. Builds ask production.
+const STATS_URL = `${import.meta.env.DEV ? 'https://localhost:5173' : 'https://api.csdeaf.com'}/api/deafcs/stats`;
 const MAX_IDS = 10; // per request, the server's limit
 const FRESH_MS = 5 * 60_000; // the server caches 5 minutes too
 const RETRY_MS = 60_000; // after a failed request

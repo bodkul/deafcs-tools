@@ -27,6 +27,11 @@ pnpm compile           # type check
 To load a build by hand: `chrome://extensions` → Developer mode → "Load unpacked" → `.output/chrome-mv3`;
 in Firefox, `about:debugging#/runtime/this-firefox` → "Load Temporary Add-on…" → `.output/firefox-mv2/manifest.json`.
 
+Player & Map Stats asks production (`api.csdeaf.com`) in builds, and a local csdeaf in `pnpm dev`: start its Aspire
+AppHost (`dotnet run --project backend/src/Csdeaf.AppHost` in the csdeaf repo), whose web app on
+`https://localhost:5173` proxies `/api` to the Api. The ASP.NET Core developer certificate must be trusted
+(`dotnet dev-certs https --trust`); Chrome may ask deafcs.net for access to the local network once, allow it.
+
 Layout:
 
 - `entrypoints/deafcs.content/`: the deafcs.net content script (plain TypeScript), one module per feature.
