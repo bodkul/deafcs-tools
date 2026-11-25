@@ -1,4 +1,4 @@
-import { log, warn } from '@/utils/shared';
+import { log, warn, type StringKey } from '@/utils/shared';
 import type { Common } from './common';
 
 // Recent form of the match players, from csdeaf.com (which reads the deafcs.net API): K/D, ADR,
@@ -6,7 +6,9 @@ import type { Common } from './common';
 // and team panels) and under every player on the scoreboard while the server bar is up (warmup
 // and live), and each team's win rate, K/D and ADR on every map of the map veto (team 1 on
 // the left of the tile, team 2 on the right). Counted over the newest 30 matches in the queue of
-// this match (Competitive, Pro, Wingman and Duel apart).
+// this match (Competitive, Pro, Wingman and Duel apart). Also: each player's roles (sniper, entry,
+// clutcher, support, anchor, worked out by the server) under their stats, the team's averages
+// under its panel header, and on the veto the map each team should ban or keep.
 const STATS_URL = 'https://api.csdeaf.com/api/deafcs/stats';
 const MAX_IDS = 10; // per request, the server's limit
 const FRESH_MS = 5 * 60_000; // the server caches 5 minutes too
@@ -51,6 +53,36 @@ const CSS = `
     white-space: nowrap;
   }
   [${MARK}="player"] b { color: hsl(var(--foreground)); font-weight: 600; }
+  /* Roles, one chip each in the role's color: a line of their own on the cards, at the end of
+     the scoreboard row. */
+  [${MARK}="roles"] {
+    flex: 0 0 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 3px 2px 0;
+  }
+  [${MARK}] .role {
+    padding: 1px 5px;
+    border-radius: 4px;
+    font: 700 10px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--role);
+    background: color-mix(in srgb, var(--role) 18%, transparent);
+  }
+  /* Team averages under the panel header (name, average ELO), above the slot pips. */
+  [${MARK}="team"] {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 8px;
+    margin: -6px 0 10px;
+    font: 500 12px/1.25 system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-variant-numeric: tabular-nums;
+    color: hsl(var(--muted-foreground));
+  }
+  [${MARK}="team"] b { color: hsl(var(--foreground)); font-weight: 600; }
   /* Under the player in the scoreboard's name cell (220px, 110px on phones: wraps there).
      The margin clears the career level badge, which hangs 6px below the avatar. */
   [${MARK}="row"] {
@@ -90,6 +122,18 @@ const CSS = `
   [${MARK}^="map-"] .v { text-align: right; }
   [${MARK}^="map-"] .v.best { color: hsl(142 70% 60%); }
   [${MARK}^="map-"] .l { font-size: 10px; font-weight: 500; opacity: 0.65; }
+  [${MARK}^="map-"] .hint {
+    margin-left: 5px;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  [${MARK}^="map-"] .hint.ban { background: hsl(0 70% 48%); }
+  [${MARK}^="map-"] .hint.pick { background: hsl(142 60% 34%); }
 `;
 
 type Queue = 'competitive' | 'pro' | 'wingman' | 'duel';
@@ -115,7 +159,20 @@ interface PlayerForm {
   adr: number;
   headshotRate: number | null;
   maps: MapRecord[];
+  roles?: string[] | null; // an older API (or its cached answer) has none
 }
+
+// Roles the server gives out, with their chip color and the hint that explains them.
+const ROLES: Record<string, { color: string; hint: StringKey }> = {
+  sniper: { color: 'hsl(0 80% 66%)', hint: 'roleSniper' },
+  entry: { color: 'hsl(28 95% 60%)', hint: 'roleEntry' },
+  clutcher: { color: 'hsl(275 75% 72%)', hint: 'roleClutcher' },
+  support: { color: 'hsl(170 65% 50%)', hint: 'roleSupport' },
+  anchor: { color: 'hsl(210 90% 66%)', hint: 'roleAnchor' },
+};
+
+// Matches both teams need on a map before the veto suggests banning or keeping it.
+const HINT_MIN_MATCHES = 3;
 
 interface CacheEntry {
   form: PlayerForm | null;
@@ -168,13 +225,21 @@ function h(tag: string, attrs: Record<string, string>, ...children: (Node | stri
   return el;
 }
 
-// Writes only when something changed, so our own mutations don't loop the observer.
-function put(host: Element, kind: string, key: string, content: (Node | string)[], title: string) {
+// Writes only when something changed, so our own mutations don't loop the observer. The element
+// is a child of host, at the end unless place puts it elsewhere in host.
+function put(
+  host: Element,
+  kind: string,
+  key: string,
+  content: (Node | string)[],
+  title: string,
+  place: (el: HTMLElement) => void = (el) => host.appendChild(el),
+) {
   let el = host.querySelector<HTMLElement>(`:scope > [${MARK}="${kind}"]`);
   if (!el) {
     el = document.createElement('div');
     el.setAttribute(MARK, kind);
-    host.appendChild(el);
+    place(el);
   }
   if (el.dataset.key === key) return;
   el.dataset.key = key;
@@ -270,16 +335,49 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
     };
   }
 
-  function renderForm(host: Element, kind: string, queue: Queue, id: string) {
+  function roleChips(form: PlayerForm) {
+    return (form.roles ?? []).flatMap((role) => {
+      const known = ROLES[role];
+      return known ? [h('span', { class: 'role', style: `--role:${known.color}`, title: t(known.hint) }, role)] : [];
+    });
+  }
+
+  // The stats; on the cards the roles go on a line of their own, on the scoreboard row at its end.
+  function renderForm(host: Element, kind: 'player' | 'row', queue: Queue, id: string) {
     const form = cached(queue, id)?.form;
     if (!form) return;
     const { content, title } = playerBlock(form, queue);
+    const chips = roleChips(form);
+    const key = `${queue}:${id}:${form.matches}:${form.kd}:${form.adr}:${form.wins}:${form.headshotRate}:${form.roles}`;
+    if (kind === 'row') return put(host, kind, key, [...content, ...chips], title);
+    put(host, kind, key, content, title);
+    if (chips.length) put(host, 'roles', key, chips, '');
+    else host.querySelector(`:scope > [${MARK}="roles"]`)?.remove();
+  }
+
+  // Averages of a team's players with matches in the queue, under the panel header.
+  function renderTeamSummary(queue: Queue, panel: Element, ids: string[]) {
+    const header = panel.querySelector('h3')?.parentElement?.parentElement;
+    if (!header || header.parentElement !== panel) return;
+    const forms = ids.map((id) => cached(queue, id)?.form).filter((f): f is PlayerForm => !!f?.matches);
+    if (!forms.length) {
+      panel.querySelector(`:scope > [${MARK}="team"]`)?.remove();
+      return;
+    }
+    const avg = (pick: (f: PlayerForm) => number) => forms.reduce((sum, f) => sum + pick(f), 0) / forms.length;
+    const matches = forms.reduce((sum, f) => sum + f.matches, 0);
+    const wins = forms.reduce((sum, f) => sum + f.wins, 0);
+    const stat = (value: string, label: string) => h('span', {}, h('b', {}, value), ` ${label}`);
+    const kd = avg((f) => Number(f.kd)).toFixed(2);
+    const adr = String(Math.round(avg((f) => f.adr)));
+    const wr = `${pct(wins, matches)}%`;
     put(
-      host,
-      kind,
-      `${queue}:${id}:${form.matches}:${form.kd}:${form.adr}:${form.wins}:${form.headshotRate}`,
-      content,
-      title,
+      panel,
+      'team',
+      `${queue}:${forms.length}:${kd}:${adr}:${wr}`,
+      [stat(kd, 'K/D'), stat(adr, 'ADR'), stat(wr, 'WR')],
+      t('statsTeamTitle', { n: forms.length, queue: QUEUE_NAMES[queue] }),
+      (el) => header.after(el),
     );
   }
 
@@ -293,14 +391,16 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
 
   // Picked players, in their team's panel: the same cards as on the pick, from the first pick
   // through the veto.
-  function renderTeams(queue: Queue) {
-    for (const sel of TEAM_SELECTORS) {
+  function renderTeams(queue: Queue, teams: string[][]) {
+    TEAM_SELECTORS.forEach((sel, i) => {
       for (const card of document.querySelectorAll(`${sel} .draft-player-card`)) {
         const link = card.querySelector(PLAYER_LINK);
         const id = link && steamIdOf(link);
         if (id) renderForm(card, 'player', queue, id);
       }
-    }
+      const panel = document.querySelector(sel);
+      if (panel) renderTeamSummary(queue, panel, teams[i]!);
+    });
   }
 
   function renderBoard(queue: Queue, cells: { cell: Element; id: string }[]) {
@@ -343,8 +443,29 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
     ];
   }
 
+  // For each team, the map to ban (where the other team's win rate is furthest above its own) and
+  // the one to keep (the reverse), among the maps both teams played enough. Nothing when fewer than
+  // two maps qualify, so the decider gets no hint.
+  function vetoHints(tiles: { map: string; records: ReturnType<typeof teamRecord>[] }[]) {
+    const rate = (r: ReturnType<typeof teamRecord>) => r.wins / r.matches;
+    const fair = tiles.filter((tile) => tile.records.every((r) => r.matches >= HINT_MIN_MATCHES));
+    return [0, 1].map((i) => {
+      const hints = new Map<string, 'ban' | 'pick'>();
+      if (fair.length < 2) return hints;
+      const edges = fair
+        .map((tile) => ({ map: tile.map, edge: rate(tile.records[i]!) - rate(tile.records[1 - i]!) }))
+        .sort((a, b) => a.edge - b.edge);
+      const worst = edges[0]!;
+      const best = edges[edges.length - 1]!;
+      if (worst.edge < 0) hints.set(worst.map, 'ban');
+      if (best.edge > 0) hints.set(best.map, 'pick');
+      return hints;
+    });
+  }
+
   function renderVeto(queue: Queue, teams: string[][]) {
     const labels = teamLabels();
+    const tiles: { tile: HTMLElement; map: string; records: ReturnType<typeof teamRecord>[] }[] = [];
     for (const tile of document.querySelectorAll<HTMLElement>(VETO_MAP)) {
       const map = mapOf(tile);
       if (!map || tile.dataset.state === 'banned') {
@@ -353,6 +474,13 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
       }
       const records = teams.map((ids) => teamRecord(queue, ids, map));
       if (records.some((r) => !r.known)) continue;
+      tiles.push({ tile, map, records });
+    }
+    const hints = vetoHints(tiles);
+    const hintText = (hint: 'ban' | 'pick') => t(hint === 'ban' ? 'statsBan' : 'statsPick');
+    const hintTitle = (hint: 'ban' | 'pick') => t(hint === 'ban' ? 'statsBanHint' : 'statsPickHint');
+
+    for (const { tile, map, records } of tiles) {
       // Older API on one side only (a cached answer): show the win rate alone on both.
       const detailed = records.every((r) => r.detailed);
       const stats = records.map((r) => teamStats({ ...r, detailed }));
@@ -367,22 +495,29 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
                 : [t('statsMapLine', { rate: rows[0]!.value, wins: r.wins, matches: r.matches })]
                     .concat(rows.slice(1).map((row) => `${row.label} ${row.text}`))
                     .join(', ');
-            return `\n${labels[i]!.name}: ${line}`;
+            const hint = hints[i]!.get(map);
+            return `\n${labels[i]!.name}: ${line}${hint ? ` (${hintTitle(hint)})` : ''}`;
           })
           .join('');
       if (getComputedStyle(tile).position === 'static') tile.style.position = 'relative';
       stats.forEach((rows, i) => {
         const other = stats[1 - i]!;
         const { tag, color } = labels[i]!;
+        const hint = hints[i]!.get(map);
         const content = [
-          h('span', { class: 'tag', style: `--team:${color}` }, tag),
+          h(
+            'span',
+            { class: 'tag', style: `--team:${color}` },
+            tag,
+            ...(hint ? [h('span', { class: `hint ${hint}` }, hintText(hint))] : []),
+          ),
           ...rows.flatMap((row, k) => {
             const vs = other[k]?.value;
             const best = row.value != null && vs != null && row.value > vs;
             return [h('span', { class: best ? 'v best' : 'v' }, row.text), h('span', { class: 'l' }, row.label)];
           }),
         ];
-        const key = `${queue}:${map}:${tag}:${color}:${rows.map((row) => row.text + row.label)}:${other.map((row) => row.text)}`;
+        const key = `${queue}:${map}:${tag}:${color}:${hint}:${rows.map((row) => row.text + row.label)}:${other.map((row) => row.text)}`;
         put(tile, `map-${i + 1}`, key, content, title);
       });
     }
@@ -406,7 +541,7 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
 
     ensureStyle();
     if (picking) renderPick(queue);
-    renderTeams(queue);
+    renderTeams(queue, teams);
     if (veto && teams.every((ids) => ids.length)) renderVeto(queue, teams);
     if (board.length) renderBoard(queue, board);
   }
