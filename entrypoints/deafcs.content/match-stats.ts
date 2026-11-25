@@ -4,8 +4,9 @@ import type { Common } from './common';
 // Recent form of the match players, from csdeaf.com (which reads the deafcs.net API): K/D, ADR,
 // win and headshot rate on every player card from the captain pick through the veto (free players
 // and team panels) and under every player on the scoreboard while the server bar is up (warmup
-// and live), and each team's win rate per map on the map veto. Counted over the newest 30 matches in the queue of this match (Competitive, Pro,
-// Wingman and Duel apart).
+// and live), and each team's win rate, K/D and ADR on every map of the map veto (team 1 on
+// the left of the tile, team 2 on the right). Counted over the newest 30 matches in the queue of
+// this match (Competitive, Pro, Wingman and Duel apart).
 const STATS_URL = 'https://api.csdeaf.com/api/deafcs/stats';
 const MAX_IDS = 10; // per request, the server's limit
 const FRESH_MS = 5 * 60_000; // the server caches 5 minutes too
@@ -63,17 +64,18 @@ const CSS = `
   }
   [${MARK}="row"] > span { white-space: nowrap; }
   [${MARK}="row"] b { color: hsl(var(--foreground)); font-weight: 600; }
-  /* One row per team: "PT  80%  из 5" (team tag in the team's color, win rate, matches). */
-  [${MARK}="map"] {
+  /* One block per team, team 1 in the tile's top left corner and team 2 in the top right: the
+     team tag in the team's color, then value and label rows (win rate with its matches, K/D,
+     ADR). The better of the two teams' values is green. */
+  [${MARK}^="map-"] {
     position: absolute;
     top: 6px;
-    right: 6px;
     z-index: 2;
     display: grid;
-    grid-template-columns: auto auto auto;
+    grid-template-columns: auto auto;
     align-items: baseline;
-    column-gap: 5px;
-    row-gap: 2px;
+    column-gap: 4px;
+    row-gap: 1px;
     padding: 4px 6px;
     border-radius: 6px;
     background: rgb(0 0 0 / 0.75);
@@ -82,20 +84,27 @@ const CSS = `
     font-variant-numeric: tabular-nums;
     pointer-events: auto;
   }
-  [${MARK}="map"] .tag { font-weight: 700; color: var(--team, #fff); }
-  [${MARK}="map"] .rate { text-align: right; }
-  [${MARK}="map"] .rate.best { color: hsl(142 70% 60%); }
-  [${MARK}="map"] .n { font-size: 10px; font-weight: 500; opacity: 0.65; }
+  [${MARK}="map-1"] { left: 6px; }
+  [${MARK}="map-2"] { right: 6px; }
+  [${MARK}^="map-"] .tag { grid-column: 1 / -1; font-weight: 700; color: var(--team, #fff); }
+  [${MARK}^="map-"] .v { text-align: right; }
+  [${MARK}^="map-"] .v.best { color: hsl(142 70% 60%); }
+  [${MARK}^="map-"] .l { font-size: 10px; font-weight: 500; opacity: 0.65; }
 `;
 
 type Queue = 'competitive' | 'pro' | 'wingman' | 'duel';
 
 const QUEUE_NAMES: Record<Queue, string> = { competitive: 'Competitive', pro: 'Pro', wingman: 'Wingman', duel: 'Duel' };
 
+// The sums came with the K/D and ADR on the veto; an older API sends only matches and wins.
 interface MapRecord {
   map: string;
   matches: number;
   wins: number;
+  kills?: number;
+  deaths?: number;
+  damage?: number;
+  rounds?: number;
 }
 
 interface PlayerForm {
@@ -298,22 +307,40 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
     for (const { cell, id } of cells) renderForm(cell, 'row', queue, id);
   }
 
-  // Map record of a team: wins and matches of its players on the map, added up.
+  // Map record of a team: its players' matches on the map, added up.
   function teamRecord(queue: Queue, ids: string[], map: string) {
-    let matches = 0;
-    let wins = 0;
+    const sum = { matches: 0, wins: 0, kills: 0, deaths: 0, damage: 0, rounds: 0 };
     let known = 0;
+    let detailed = true;
     for (const id of ids) {
       const form = cached(queue, id)?.form;
       if (!form) continue;
       known++;
       const record = form.maps.find((m) => m.map === map);
-      if (record) {
-        matches += record.matches;
-        wins += record.wins;
-      }
+      if (!record) continue;
+      if (record.kills == null) detailed = false;
+      for (const key of Object.keys(sum) as (keyof typeof sum)[]) sum[key] += record[key] ?? 0;
     }
-    return { matches, wins, known };
+    return { ...sum, known, detailed };
+  }
+
+  // Win rate, K/D and ADR of a team on a map, as numbers (null when there is nothing to count)
+  // and as text.
+  function teamStats(r: ReturnType<typeof teamRecord>) {
+    const played = r.matches > 0;
+    const full = played && r.detailed;
+    const wr = played ? pct(r.wins, r.matches) : null;
+    const kd = full ? (r.deaths ? r.kills / r.deaths : r.kills) : null;
+    const adr = full && r.rounds ? r.damage / r.rounds : null;
+    return [
+      { value: wr, text: wr == null ? '—' : `${wr}%`, label: t('statsOfMatches', { n: r.matches }) },
+      ...(r.detailed
+        ? [
+            { value: kd, text: kd == null ? '—' : kd.toFixed(2), label: 'K/D' },
+            { value: adr, text: adr == null ? '—' : String(Math.round(adr)), label: 'ADR' },
+          ]
+        : []),
+    ];
   }
 
   function renderVeto(queue: Queue, teams: string[][]) {
@@ -321,37 +348,43 @@ export function matchStats({ feature, t, isMatchPage }: Common) {
     for (const tile of document.querySelectorAll<HTMLElement>(VETO_MAP)) {
       const map = mapOf(tile);
       if (!map || tile.dataset.state === 'banned') {
-        tile.querySelector(`:scope > [${MARK}]`)?.remove();
+        for (const el of tile.querySelectorAll(`:scope > [${MARK}]`)) el.remove();
         continue;
       }
       const records = teams.map((ids) => teamRecord(queue, ids, map));
       if (records.some((r) => !r.known)) continue;
-      const rates = records.map((r) => (r.matches ? pct(r.wins, r.matches) : null));
-      const best =
-        rates[0] != null && rates[1] != null && rates[0] !== rates[1] ? (rates[0] > rates[1] ? 0 : 1) : -1;
-      const content = records.flatMap((r, i) => {
-        const { tag, color } = labels[i]!;
-        return [
-          h('span', { class: 'tag', style: `--team:${color}` }, tag),
-          h('span', { class: i === best ? 'rate best' : 'rate' }, rates[i] == null ? '—' : `${rates[i]}%`),
-          h('span', { class: 'n' }, t('statsOfMatches', { n: r.matches })),
-        ];
-      });
-      const line = (i: number) =>
-        `${labels[i]!.name}: ${
-          rates[i] == null
-            ? t('statsNoMapMatches')
-            : t('statsMapLine', { rate: rates[i]!, wins: records[i]!.wins, matches: records[i]!.matches })
-        }`;
-      const title = t('statsMapTitle', { queue: QUEUE_NAMES[queue] }) + `\n${line(0)}\n${line(1)}`;
+      // Older API on one side only (a cached answer): show the win rate alone on both.
+      const detailed = records.every((r) => r.detailed);
+      const stats = records.map((r) => teamStats({ ...r, detailed }));
+      const title =
+        t('statsMapTitle', { queue: QUEUE_NAMES[queue] }) +
+        records
+          .map((r, i) => {
+            const rows = stats[i]!;
+            const line =
+              rows[0]!.value == null
+                ? t('statsNoMapMatches')
+                : [t('statsMapLine', { rate: rows[0]!.value, wins: r.wins, matches: r.matches })]
+                    .concat(rows.slice(1).map((row) => `${row.label} ${row.text}`))
+                    .join(', ');
+            return `\n${labels[i]!.name}: ${line}`;
+          })
+          .join('');
       if (getComputedStyle(tile).position === 'static') tile.style.position = 'relative';
-      put(
-        tile,
-        'map',
-        `${queue}:${map}:${rates}:${records.map((r) => r.matches)}:${labels.map((l) => l.tag)}`,
-        content,
-        title,
-      );
+      stats.forEach((rows, i) => {
+        const other = stats[1 - i]!;
+        const { tag, color } = labels[i]!;
+        const content = [
+          h('span', { class: 'tag', style: `--team:${color}` }, tag),
+          ...rows.flatMap((row, k) => {
+            const vs = other[k]?.value;
+            const best = row.value != null && vs != null && row.value > vs;
+            return [h('span', { class: best ? 'v best' : 'v' }, row.text), h('span', { class: 'l' }, row.label)];
+          }),
+        ];
+        const key = `${queue}:${map}:${tag}:${color}:${rows.map((row) => row.text + row.label)}:${other.map((row) => row.text)}`;
+        put(tile, `map-${i + 1}`, key, content, title);
+      });
     }
   }
 

@@ -103,7 +103,7 @@ const STRINGS = {
     statsPlayerTitle: 'Last {matches} {queue} matches: {wins} W / {losses} L',
     statsNoMatches: 'No {queue} matches yet',
     statsMapTitle:
-      "Team win rate on this map: matches of its players here, out of each player's last 30 {queue} matches",
+      "Team stats on this map: matches of its players here, out of each player's last 30 {queue} matches",
     statsMapLine: '{rate}% ({wins} won of {matches})',
     statsNoMapMatches: 'no matches on this map',
     statsOfMatches: 'of {n}',
@@ -134,7 +134,7 @@ const STRINGS = {
     guide: 'Инструкция',
     statsPlayerTitle: 'Последние {matches} матчей {queue}: {wins} побед / {losses} поражений',
     statsNoMatches: 'Нет матчей {queue}',
-    statsMapTitle: 'Винрейт команды на этой карте: матчи её игроков здесь из последних 30 матчей {queue} каждого',
+    statsMapTitle: 'Статистика команды на этой карте:матчи её игроков здесь из последних 30 матчей {queue} каждого',
     statsMapLine: '{rate}% (выиграно {wins} из {matches})',
     statsNoMapMatches: 'нет матчей на этой карте',
     statsOfMatches: 'из {n}',
