@@ -41,6 +41,11 @@ To release: bump `version` in `package.json` and in the root `manifest.json`, pu
 `v<version>`. The Release workflow attaches the Chrome zip, the Firefox zip and the sources zip to a GitHub release, and
 fails if the tag doesn't match the `package.json` version or `manifest.json` differs from it.
 
+While the repository variable `FIREFOX_UNLISTED` is `true`, the workflow also has the Firefox build signed on AMO as an
+unlisted version (secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET`) and attaches it as `deafcs-tools-<version>-firefox.xpi`:
+a signed file that installs in any Firefox, for as long as the AMO listing isn't approved. AMO takes a version number in
+one channel only, so set the variable to `false` before tagging a version meant for the listing.
+
 The root `manifest.json` holds only the version and isn't part of the extension (WXT builds the real manifest from
 `wxt.config.ts`). Releases up to 1.2.1 read it from `main` to find updates; newer ones read `package.json`. Manual installs
 only: store installs update through the store and skip the check.
