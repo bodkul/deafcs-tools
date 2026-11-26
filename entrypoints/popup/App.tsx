@@ -25,9 +25,11 @@ import {
   clamp,
   DEFAULTS,
   isNewer,
+  isManualInstall,
   isSettingKey,
   LIMITS,
   resolveLang,
+  STORE,
   translate,
   UPDATE_CHECK_MS,
   type Settings,
@@ -62,6 +64,7 @@ const GUIDE_URL = 'https://csdeaf.com/tools';
 
 export default function App() {
   const [state, setState] = useState<Settings | null>(null);
+  const [manual, setManual] = useState(false);
 
   useEffect(() => {
     const onChanged = (changes: Record<string, { newValue?: unknown }>, area: string) => {
@@ -76,6 +79,7 @@ export default function App() {
     };
     browser.storage.onChanged.addListener(onChanged);
 
+    isManualInstall().then(setManual);
     browser.storage.local.get(DEFAULTS).then((stored) => {
       setState(stored as Settings);
       // Browsers that stay open for days never fire onStartup, so the popup catches up.
@@ -99,7 +103,7 @@ export default function App() {
     setState((prev) => (prev ? { ...prev, ...values } : prev));
     browser.storage.local.set(values);
   };
-  // Compared with the running version, so the banner disappears by itself once the user updates.
+  // Compared with the running version; manual installs see the store banner either way.
   const updateAvailable = isNewer(state.updateLatest, VERSION);
   // Clamped: values saved before the range changed may lie outside it.
   const delay = clamp('autoReadyDelaySec', state.autoReadyDelaySec);
@@ -139,13 +143,15 @@ export default function App() {
 
       <Separator />
 
-      {updateAvailable && (
-        <a href={GUIDE_URL} target="_blank" rel="noreferrer" className="mx-3.5 mt-2.5 block">
+      {manual && (
+        <a href={STORE.url} target="_blank" rel="noreferrer" className="mx-3.5 mt-2.5 block">
           <Alert className="border-primary/45 bg-primary/10 px-3 py-2 transition-colors hover:bg-primary/20">
             <Download className="text-primary" />
-            <AlertDescription className="flex items-center justify-between text-xs text-foreground">
-              {t('updateAvailable', { version: state.updateLatest })}
-              <b className="text-primary">{t('updateDownload')}</b>
+            <AlertDescription className="flex items-center justify-between gap-2 text-xs text-foreground">
+              {updateAvailable
+                ? t('storeUpdate', { version: state.updateLatest, store: STORE.name })
+                : t('storeNow', { store: STORE.name })}
+              <b className="shrink-0 text-primary">{t('storeInstall')}</b>
             </AlertDescription>
           </Alert>
         </a>

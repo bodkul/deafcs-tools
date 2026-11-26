@@ -30,9 +30,14 @@ export const isSettingKey = (key: string): key is SettingKey => key in DEFAULTS;
 const LATEST_URL = 'https://raw.githubusercontent.com/bodkul/deafcs-tools/main/package.json';
 export const UPDATE_CHECK_MS = 24 * 60 * 60_000;
 
+// Store listings. Manual installs are pointed there: store builds update themselves.
+export const STORE = import.meta.env.FIREFOX
+  ? { name: 'Firefox Add-ons', url: 'https://addons.mozilla.org/firefox/addon/deafcs-tools/' }
+  : { name: 'Chrome Web Store', url: 'https://chromewebstore.google.com/detail/nbdgdkhhijmolpdemncnngkmncodfkkp' };
+
 // Installed by hand: "Load unpacked" in Chrome, a temporary add-on in Firefox. Store installs
 // (Chrome Web Store, AMO) are "normal" and update themselves, so they skip the GitHub check and
-// never show the banner. getSelf needs no "management" permission.
+// never show the store banner. getSelf needs no "management" permission.
 export async function isManualInstall() {
   try {
     return (await browser.management.getSelf()).installType === 'development';
@@ -119,8 +124,9 @@ const STRINGS = {
     roleAnchor: 'Anchor: holds the site on CT and rarely takes the first duel',
     ipCopied: 'IP copied',
     autoJoinFired: 'Joining server…',
-    updateAvailable: 'Update available: v{version}',
-    updateDownload: 'Download',
+    storeNow: 'Now in {store}: updates by itself. Install it there and remove this copy.',
+    storeUpdate: 'v{version} is in {store}: install it there and remove this copy.',
+    storeInstall: 'Install',
   },
   ru: {
     subtitle: 'Помощник для deafcs.net',
@@ -160,8 +166,9 @@ const STRINGS = {
     roleAnchor: 'Якорь: держит плент за CT и редко идёт на первую дуэль',
     ipCopied: 'IP скопирован',
     autoJoinFired: 'Подключаемся к серверу…',
-    updateAvailable: 'Доступно обновление: v{version}',
-    updateDownload: 'Скачать',
+    storeNow: 'Теперь в {store}, обновляется сам. Установите оттуда и удалите эту копию.',
+    storeUpdate: 'v{version} есть в {store}: установите оттуда и удалите эту копию.',
+    storeInstall: 'Установить',
   },
 } as const;
 
