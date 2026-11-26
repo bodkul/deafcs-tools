@@ -22,6 +22,11 @@ on:
         description: Release tag to submit (v1.2.3)
         required: true
         type: string
+      store:
+        description: Store (a version already on a store can't be sent there again)
+        type: choice
+        options: [both, chrome, firefox]
+        default: both
   workflow_call:
     inputs:
       tag:
@@ -74,6 +79,7 @@ jobs:
       - name: Submit
         env:
           VERSION: ${{ steps.files.outputs.version }}
+          STORE: ${{ inputs.store || 'both' }}
           CHROME_API_VERSION: v2
           CHROME_EXTENSION_ID: nbdgdkhhijmolpdemncnngkmncodfkkp
           CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
@@ -84,8 +90,18 @@ jobs:
           FIREFOX_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           FIREFOX_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
         run: |
-          pnpm exec wxt submit \
-            --chrome-zip ".output/deafcs-tools-$VERSION-chrome.zip" \
-            --firefox-zip ".output/deafcs-tools-$VERSION-firefox.zip" \
-            --firefox-sources-zip ".output/deafcs-tools-$VERSION-sources.zip" \
-            --firefox-amo-metadata-file amo-metadata.json
+          # A key pasted from the JSON file keeps its "\n" escapes: turn them into line breaks.
+          case "$CHROME_SERVICE_ACCOUNT_PRIVATE_KEY" in
+            *'\n'*) CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(printf '%b' "$CHROME_SERVICE_ACCOUNT_PRIVATE_KEY")" ;;
+          esac
+          export CHROME_SERVICE_ACCOUNT_PRIVATE_KEY
+          args=()
+          if [ "$STORE" != firefox ]; then
+            args+=(--chrome-zip ".output/deafcs-tools-$VERSION-chrome.zip")
+          fi
+          if [ "$STORE" != chrome ]; then
+            args+=(--firefox-zip ".output/deafcs-tools-$VERSION-firefox.zip"
+              --firefox-sources-zip ".output/deafcs-tools-$VERSION-sources.zip"
+              --firefox-amo-metadata-file amo-metadata.json)
+          fi
+          pnpm exec wxt submit "${args[@]}"
