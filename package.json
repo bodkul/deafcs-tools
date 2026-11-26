@@ -5,7 +5,7 @@
   "description": "Helper for DeafCS players: auto-accept, player and map stats, server IP copy and auto-join, queue dots.",
   "license": "MIT",
   "type": "module",
-  "packageManager": "pnpm@12.21.0",
+  "packageManager": "pnpm@12.23.0",
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
@@ -20,13 +20,13 @@
     "@base-ui/react": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
-    "lucide-react": "^1.76.0",
+    "lucide-react": "^1.80.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.3.2",
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.1.5",
     "shadcn": "^4.23.0",
