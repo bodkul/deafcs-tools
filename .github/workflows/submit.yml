@@ -1,0 +1,91 @@
+# Sends a release's zips to the Chrome Web Store and to Firefox Add-ons (AMO) for review, with
+# `wxt submit` (publish-browser-extension). The zips come from the GitHub release of the tag, so
+# the stores get exactly what the release offers. The stores still review every version: it goes
+# live after their approval.
+#
+# Runs after the Release workflow when the repository variable STORE_SUBMIT is "true", or by hand
+# (Actions -> Submit to stores -> Run workflow) for a tag that is already released.
+#
+# AMO version notes: store/release-notes/<version>.txt (required, English, plain text).
+#
+# Secrets:
+#   CHROME_PUBLISHER_ID                  developer dashboard URL: chrome.google.com/webstore/devconsole/<publisher-id>
+#   CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL  client_email of the service account's JSON key
+#   CHROME_SERVICE_ACCOUNT_PRIVATE_KEY   private_key of the same JSON key
+#   AMO_JWT_ISSUER, AMO_JWT_SECRET       addons.mozilla.org/developers/addon/api/key/
+name: Submit to stores
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to submit (v1.2.3)
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      # The tag's commit when called by Release; the chosen branch (main) when run by hand, so notes
+      # written after the tag are found. The zips themselves always come from the release.
+      - uses: actions/checkout@v4
+
+      - name: Release notes and zips
+        id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          version="${TAG#v}"
+          notes="store/release-notes/$version.txt"
+          if [ ! -s "$notes" ]; then
+            echo "::error::$notes is missing or empty: AMO needs version notes"
+            exit 1
+          fi
+          jq -n --rawfile notes "$notes" '{version: {release_notes: {"en-US": ($notes | rtrimstr("\n"))}}}' > amo-metadata.json
+          mkdir -p .output
+          gh release download "$TAG" -D .output \
+            -p "deafcs-tools-$version-chrome.zip" \
+            -p "deafcs-tools-$version-firefox.zip" \
+            -p "deafcs-tools-$version-sources.zip"
+          ls -l .output
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # pnpm version comes from "packageManager" in package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Submit
+        env:
+          VERSION: ${{ steps.files.outputs.version }}
+          CHROME_API_VERSION: v2
+          CHROME_EXTENSION_ID: nbdgdkhhijmolpdemncnngkmncodfkkp
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
+          FIREFOX_EXTENSION_ID: deafcs-tools@csdeaf.com
+          FIREFOX_CHANNEL: listed
+          FIREFOX_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          pnpm exec wxt submit \
+            --chrome-zip ".output/deafcs-tools-$VERSION-chrome.zip" \
+            --firefox-zip ".output/deafcs-tools-$VERSION-firefox.zip" \
+            --firefox-sources-zip ".output/deafcs-tools-$VERSION-sources.zip" \
+            --firefox-amo-metadata-file amo-metadata.json

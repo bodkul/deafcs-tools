@@ -44,9 +44,12 @@ Layout:
 - `utils/shared.ts`: settings, defaults, translations, logging.
 - `store/`: store listing texts and screenshots; not part of the build or the sources zip.
 
-To release: bump `version` in `package.json` and in the root `manifest.json`, push to `main`, then push the tag
-`v<version>`. The Release workflow attaches the Chrome zip, the Firefox zip and the sources zip to a GitHub release, and
-fails if the tag doesn't match the `package.json` version or `manifest.json` differs from it.
+To release: bump `version` in `package.json` and in the root `manifest.json`, write the AMO version notes in
+`store/release-notes/<version>.txt`, push to `main`, then push the tag `v<version>`. The Release workflow attaches the
+Chrome zip, the Firefox zip and the sources zip to a GitHub release, and fails if the tag doesn't match the
+`package.json` version or `manifest.json` differs from it. With the repository variable `STORE_SUBMIT` = `true` it then
+runs Submit to stores (`.github/workflows/submit.yml`): the release's zips go to the Chrome Web Store and to Firefox
+Add-ons for review (secrets listed in the workflow). Submit to stores can also be run by hand for a released tag.
 
 The root `manifest.json` holds only the version and isn't part of the extension (WXT builds the real manifest from
 `wxt.config.ts`). Releases up to 1.2.1 read it from `main` to find updates; newer ones read `package.json`. Manual installs

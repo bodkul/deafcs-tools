@@ -1,0 +1,2 @@
+• Player & Map Stats from the captain pick to the end of the match: on every player card during the pick and veto, and in the scoreboard during the warmup and the match.
+• Auto-Ready and Queue Dots work on the Russian site too.

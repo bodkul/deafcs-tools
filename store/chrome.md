@@ -127,4 +127,4 @@ Most features act only during a live deafcs.net match (Match Found dialog, capta
 
 ## Release notes
 
-The Chrome Web Store has no release notes field; the GitHub release and [amo.md](amo.md) keep them.
+The Chrome Web Store has no release notes field; [release-notes/](release-notes/) keeps them for AMO.

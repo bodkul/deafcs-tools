@@ -1,5 +1,5 @@
 # On a v* tag: builds the Chrome and Firefox zips (plus the Firefox sources zip for AMO review)
-# with WXT and publishes them as a GitHub Release.
+# with WXT and publishes them as a GitHub Release, then sends them to the stores (submit.yml).
 # The tag must match "version" in package.json (v1.2.3 <-> 1.2.3), and the root manifest.json must
 # have the same version, otherwise the run fails.
 name: Release
@@ -68,3 +68,12 @@ jobs:
           gh release upload "$GITHUB_REF_NAME" \
             ".output/deafcs-tools-$VERSION-firefox.zip" \
             ".output/deafcs-tools-$VERSION-sources.zip"
+
+  # Chrome Web Store and AMO, once the store secrets are set (see submit.yml).
+  submit:
+    needs: release
+    if: vars.STORE_SUBMIT == 'true'
+    uses: ./.github/workflows/submit.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets: inherit

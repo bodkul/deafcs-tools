@@ -1,0 +1,4 @@
+• Player roles (sniper, entry, clutcher, support, anchor) under each player's stats.
+• Team averages under each team's panel during the captain pick.
+• Map veto: each team's stats on its own side of the map tile, with K/D and ADR, and a ban or pick hint per team.
+• Copies installed by hand point to the store listing, which updates by itself.

@@ -91,32 +91,9 @@ Stats on the captain pick and map veto can only be captured during a live match.
 
 ## Release notes
 
-One entry per version, newest first; paste the current one into "Version notes" on upload.
-
-**1.4.0**:
-
-```
-• Player roles (sniper, entry, clutcher, support, anchor) under each player's stats.
-• Team averages under each team's panel during the captain pick.
-• Map veto: each team's stats on its own side of the map tile, with K/D and ADR, and a ban or pick hint per team.
-• Copies installed by hand point to the store listing, which updates by itself.
-```
-
-**1.3.1**:
-
-```
-• Player & Map Stats from the captain pick to the end of the match: on every player card during the pick and veto, and in the scoreboard during the warmup and the match.
-• Auto-Ready and Queue Dots work on the Russian site too.
-```
-
-**1.3.0** (first release on AMO, built from commit 68460d7):
-
-```
-First release on Firefox Add-ons.
-• New popup: features grouped into Match and Site, with descriptions; Auto-Ready delay slider (1–10 s).
-• Player & Map Stats on the captain pick and map veto.
-• Toasts on deafcs.net match the new dark theme.
-```
+One file per version: [release-notes/](release-notes/)`<version>.txt`, English plain text. The Submit
+workflow sends it to AMO as the version notes and fails without it. 1.3.0 was the first release on AMO, built from
+commit 68460d7.
 
 ## Notes to reviewer
 
