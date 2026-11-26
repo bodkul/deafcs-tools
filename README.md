@@ -5,7 +5,9 @@ Queue Dots and Hide Cancelled Matches.
 
 ## Install
 
-- Download: **https://github.com/bodkul/deafcs-tools/releases/latest**
+- Chrome: **[Chrome Web Store](https://chromewebstore.google.com/detail/nbdgdkhhijmolpdemncnngkmncodfkkp)**
+- Firefox: **[Firefox Add-ons](https://addons.mozilla.org/firefox/addon/deafcs-tools/)**
+- Manual install (zips): https://github.com/bodkul/deafcs-tools/releases/latest
 - Guide and features: **https://csdeaf.com/tools**
 - Privacy policy: [PRIVACY.md](PRIVACY.md)
 
@@ -38,7 +40,7 @@ Layout:
 - `entrypoints/copy-hook.ts`: patches the site's clipboard calls in the page's main world; injected by the content script.
 - `entrypoints/popup/`: settings popup (React, Tailwind CSS v4, theme in `style.css`).
 - `components/ui/`: [shadcn/ui](https://ui.shadcn.com) components on [Base UI](https://base-ui.com) (style `base-nova`); add more with `pnpm shadcn add <name>`. They import `cn()` straight from the [`cn`](https://github.com/shadcn-ui/cn) package.
-- `entrypoints/background.ts`: update check; in Chrome, injects the content script into tabs open at install time.
+- `entrypoints/background.ts`: update check for manual installs; in Chrome, injects the content script into tabs open at install time.
 - `utils/shared.ts`: settings, defaults, translations, logging.
 - `store/`: store listing texts and screenshots; not part of the build or the sources zip.
 
@@ -46,14 +48,10 @@ To release: bump `version` in `package.json` and in the root `manifest.json`, pu
 `v<version>`. The Release workflow attaches the Chrome zip, the Firefox zip and the sources zip to a GitHub release, and
 fails if the tag doesn't match the `package.json` version or `manifest.json` differs from it.
 
-While the repository variable `FIREFOX_UNLISTED` is `true`, the workflow also has the Firefox build signed on AMO as an
-unlisted version (secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET`) and attaches it as `deafcs-tools-<version>-firefox.xpi`:
-a signed file that installs in any Firefox, for as long as the AMO listing isn't approved. AMO takes a version number in
-one channel only, so set the variable to `false` before tagging a version meant for the listing.
-
 The root `manifest.json` holds only the version and isn't part of the extension (WXT builds the real manifest from
 `wxt.config.ts`). Releases up to 1.2.1 read it from `main` to find updates; newer ones read `package.json`. Manual installs
-only: store installs update through the store and skip the check.
+only: store installs update through the store and skip the check. Manual installs also get a popup banner that sends
+them to the store listing.
 
 Logs in DevTools are prefixed with `[deafcs-tools]`. Saved deafcs.net pages for testing selectors go into `fixtures/`
 (gitignored: they may contain real player data, never commit them).

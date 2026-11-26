@@ -1,5 +1,5 @@
 # On a v* tag: builds the Chrome and Firefox zips (plus the Firefox sources zip for AMO review)
-# with WXT, optionally signs the Firefox build as an unlisted .xpi, and publishes them as a GitHub Release.
+# with WXT and publishes them as a GitHub Release.
 # The tag must match "version" in package.json (v1.2.3 <-> 1.2.3), and the root manifest.json must
 # have the same version, otherwise the run fails.
 name: Release
@@ -55,29 +55,6 @@ jobs:
           pnpm zip:firefox
           ls -l .output/*.zip
 
-      # Until the AMO listing is approved, Firefox users install a signed .xpi from the release
-      # (csdeaf.com/tools offers the "-firefox.xpi" asset). Mozilla signs unlisted versions
-      # automatically, usually within minutes. Only when the repository variable FIREFOX_UNLISTED is
-      # "true": AMO takes each version number in one channel only, so a version signed here can never
-      # be submitted to the listing. Turn the variable off before releasing a version for the listing.
-      # Needs the secrets AMO_JWT_ISSUER and AMO_JWT_SECRET (addons.mozilla.org → Developer Hub →
-      # Manage API Keys).
-      - name: Sign Firefox .xpi (unlisted)
-        if: vars.FIREFOX_UNLISTED == 'true'
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
-          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-        run: |
-          pnpm dlx web-ext@10.8.0 sign \
-            --channel unlisted \
-            --source-dir .output/firefox-mv2 \
-            --artifacts-dir .output/signed \
-            --upload-source-code ".output/deafcs-tools-$VERSION-sources.zip" \
-            --approval-timeout 1800000
-          mv .output/signed/*.xpi ".output/deafcs-tools-$VERSION-firefox.xpi"
-          ls -l .output/*.xpi
-
       # The Chrome zip goes up first, alone: csdeaf.com/tools offers the release's first .zip asset
       # as the download, so it must not be the Firefox or sources zip.
       - name: Publish release
@@ -91,6 +68,3 @@ jobs:
           gh release upload "$GITHUB_REF_NAME" \
             ".output/deafcs-tools-$VERSION-firefox.zip" \
             ".output/deafcs-tools-$VERSION-sources.zip"
-          if [ -f ".output/deafcs-tools-$VERSION-firefox.xpi" ]; then
-            gh release upload "$GITHUB_REF_NAME" ".output/deafcs-tools-$VERSION-firefox.xpi"
-          fi
