@@ -93,6 +93,15 @@ Stats on the captain pick and map veto can only be captured during a live match.
 
 One entry per version, newest first; paste the current one into "Version notes" on upload.
 
+**1.4.0**:
+
+```
+• Player roles (sniper, entry, clutcher, support, anchor) under each player's stats.
+• Team averages under each team's panel during the captain pick.
+• Map veto: each team's stats on its own side of the map tile, with K/D and ADR, and a ban or pick hint per team.
+• Copies installed by hand point to the store listing, which updates by itself.
+```
+
 **1.3.1**:
 
 ```
